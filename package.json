@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "local": "node scripts/local-server.js"
+  },
   "dependencies": {
     "wrangler": "^4.106.0"
   }
