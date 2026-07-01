@@ -15,7 +15,7 @@
         </div>
         <div class="today-box">
           <span>今日建议</span>
-          <strong>学 1 课 + 考 1 轮</strong>
+          <strong id="todayGoal">学 1 课 + 考 1 轮</strong>
         </div>
       </header>
 
@@ -100,6 +100,11 @@
                   <p id="usage"></p>
                 </section>
               </div>
+
+              <section class="learn-section drill-card">
+                <div class="section-title"><span>07</span><h3>高频替换句</h3></div>
+                <ul id="drillList"></ul>
+              </section>
             </div>
           </section>
 
@@ -144,9 +149,15 @@
 
         <aside class="rightbar">
           <section class="side-card" id="dailyCard">
-            <p class="tag">飞书每日推送样例</p>
-            <h2>今日 09:30</h2>
+            <p class="tag">今日学习</p>
+            <h2 id="todayTitle">今天先学这一句</h2>
             <p id="dailyCopy"></p>
+            <div class="progress-grid">
+              <div><span>已学场景</span><strong id="learnedCount">0</strong></div>
+              <div><span>考试记录</span><strong id="examCount">0</strong></div>
+              <div><span>保存案例</span><strong id="caseCount">0</strong></div>
+            </div>
+            <button id="markLearned" type="button">标记今天学完</button>
           </section>
 
           <section class="side-card dark" id="examCard" hidden>
@@ -166,7 +177,17 @@
             <p class="tag">我的案例</p>
             <h2 id="savedCount">0 个</h2>
             <div id="savedCases" class="saved-list"></div>
+            <div class="data-actions">
+              <button id="exportData" type="button">导出备份</button>
+              <label class="import-label" for="importData">导入备份</label>
+              <input id="importData" type="file" accept="application/json" hidden />
+            </div>
             <button id="clearCases" type="button">清空案例</button>
+          </section>
+
+          <section class="side-card" id="historyCard">
+            <p class="tag">最近考试</p>
+            <div id="examHistory" class="saved-list"></div>
           </section>
         </aside>
       </section>

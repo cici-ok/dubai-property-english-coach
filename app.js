@@ -1,6 +1,7 @@
 const STORAGE_KEYS = {
   cases: "dubaiEnglishCoach.cases",
   examLogs: "dubaiEnglishCoach.examLogs",
+  progress: "dubaiEnglishCoach.progress",
 };
 
 const lessons = {
@@ -33,6 +34,13 @@ const lessons = {
       ["May I know your budget range?", "礼貌询问预算"],
       ["Which area do you prefer in Dubai?", "询问区域偏好"],
       ["Is it for investment or personal use?", "判断投资还是自住"],
+    ],
+    drills: [
+      ["Could you share your budget range?", "换一种方式问预算"],
+      ["Which area are you considering?", "问客户考虑哪个区域"],
+      ["Are you buying for investment or personal use?", "更直接判断用途"],
+      ["When are you planning to move or invest?", "问时间线"],
+      ["I can help understand your requirements first.", "先收集需求，不承诺房源"],
     ],
     mistake:
       "不要一上来发一大段楼盘介绍。客户只说 interested 时，第一目标是拿到 buy/rent、预算、户型、区域。",
@@ -85,6 +93,13 @@ const lessons = {
       ["Please send the property video before 5 PM Dubai time.", "催视频并给截止时间"],
       ["Has the client confirmed the viewing time?", "确认客户是否约好看房"],
     ],
+    drills: [
+      ["Could you send the latest property video today?", "催素材"],
+      ["Please confirm if the unit is still available.", "确认房源是否还在"],
+      ["Could we align on the next step for this lead?", "同步下一步"],
+      ["Can you update me after you speak with the client?", "让 agent 回传进展"],
+      ["Let's schedule a quick call in Dubai time.", "约短会"],
+    ],
     mistake:
       "不要只说 send me video。和 agent 沟通要说明截止时间和用途，对方更容易配合。",
     usage:
@@ -135,6 +150,13 @@ const lessons = {
       ["Partner agents handle property details and follow-up.", "说明合作方负责房源和跟进"],
       ["What commission model do you usually work with?", "询问分佣方式"],
       ["We can start with shared leads first.", "先从共享线索合作开始"],
+    ],
+    drills: [
+      ["We mainly handle lead generation and qualification.", "说明我们做线索"],
+      ["Partner agents handle property details and closing.", "说明分工"],
+      ["We can test the cooperation with shared leads first.", "先试合作"],
+      ["How do you usually structure commission?", "问佣金方式"],
+      ["Let's review conversion quality before discussing exclusivity.", "独家先不承诺"],
     ],
     mistake:
       "不要说 we have many properties。我们的定位是线索服务，不要把自己说成持有房源的中介。",
@@ -187,6 +209,13 @@ const lessons = {
       ["It offers a flexible payment plan.", "说明付款计划"],
       ["It can be suitable for investment or personal use.", "说明投资或自住"],
     ],
+    drills: [
+      ["The project is located in a fast-growing area.", "讲区域潜力"],
+      ["The starting price depends on unit size and availability.", "避免报死价"],
+      ["The payment plan is flexible for investors.", "讲付款计划"],
+      ["The handover date is expected in 2027.", "讲交房时间"],
+      ["I cannot guarantee ROI, but we can compare rental demand.", "不保证收益"],
+    ],
     mistake:
       "不要只说 luxury、amazing、best deal。优先讲区域、价格、户型、付款计划、交房时间。",
     usage:
@@ -231,6 +260,7 @@ const ids = {
   sentenceList: $("#sentenceList"),
   mistake: $("#mistake"),
   usage: $("#usage"),
+  drillList: $("#drillList"),
   pronunciationPhrase: $("#pronunciationPhrase"),
   pronunciationHint: $("#pronunciationHint"),
   pronunciationParts: $("#pronunciationParts"),
@@ -243,6 +273,12 @@ const ids = {
   examChecklist: $("#examChecklist"),
   dailyCard: $("#dailyCard"),
   dailyCopy: $("#dailyCopy"),
+  todayGoal: $("#todayGoal"),
+  todayTitle: $("#todayTitle"),
+  learnedCount: $("#learnedCount"),
+  examCount: $("#examCount"),
+  caseCount: $("#caseCount"),
+  markLearned: $("#markLearned"),
   examCard: $("#examCard"),
   roundLabel: $("#roundLabel"),
   examChat: $("#examChat"),
@@ -256,6 +292,9 @@ const ids = {
   savedCaseCard: $("#savedCaseCard"),
   savedCount: $("#savedCount"),
   savedCases: $("#savedCases"),
+  examHistory: $("#examHistory"),
+  exportData: $("#exportData"),
+  importData: $("#importData"),
   clearCases: $("#clearCases"),
 };
 
@@ -284,6 +323,10 @@ function renderList(target, rows) {
   target.innerHTML = rows.map(([term, meaning]) => `<li><strong>${escapeHtml(term)}</strong><span>${escapeHtml(meaning)}</span></li>`).join("");
 }
 
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function renderLesson() {
   const lesson = lessons[currentModule];
   ids.moduleTag.textContent = lesson.tag;
@@ -302,6 +345,8 @@ function renderLesson() {
   ids.dailyCopy.textContent = lesson.daily;
   renderList(ids.vocabList, lesson.vocab);
   renderList(ids.sentenceList, lesson.sentences);
+  renderList(ids.drillList, lesson.drills);
+  renderProgress();
 }
 
 function renderExamSetup() {
@@ -342,6 +387,7 @@ function renderStage() {
   ids.examCard.hidden = !isExam;
   ids.savedCaseCard.hidden = false;
   if (isExam) renderExamSetup();
+  renderProgress();
 }
 
 function renderSavedCases() {
@@ -353,6 +399,87 @@ function renderSavedCases() {
         .map((item) => `<article><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.summary)}</span></article>`)
         .join("")
     : "<p>还没有保存案例。</p>";
+  renderProgress();
+}
+
+function renderExamHistory() {
+  const logs = readJson(STORAGE_KEYS.examLogs, []);
+  ids.examHistory.innerHTML = logs.length
+    ? logs
+        .slice(0, 3)
+        .map((item) => {
+          const lesson = lessons[item.module] || {};
+          const date = item.createdAt ? item.createdAt.slice(0, 10) : "";
+          return `<article><strong>${escapeHtml(lesson.title || item.module)}</strong><span>${escapeHtml(date)} · ${escapeHtml(item.summary || "已完成多轮考试")}</span></article>`;
+        })
+        .join("")
+    : "<p>还没有考试记录。</p>";
+}
+
+function renderProgress() {
+  const progress = readJson(STORAGE_KEYS.progress, { learned: {}, streakDates: [] });
+  const cases = readJson(STORAGE_KEYS.cases, []);
+  const logs = readJson(STORAGE_KEYS.examLogs, []);
+  const learnedModules = Object.keys(progress.learned || {}).length;
+  ids.learnedCount.textContent = `${learnedModules}/4`;
+  ids.examCount.textContent = `${logs.length}`;
+  ids.caseCount.textContent = `${cases.length}`;
+  const doneToday = Boolean(progress.learned?.[currentModule]?.lastDate === todayKey());
+  ids.markLearned.textContent = doneToday ? "今天已学完" : "标记今天学完";
+  ids.markLearned.disabled = doneToday;
+  ids.todayTitle.textContent = doneToday ? "今天这课已完成" : "今天先学这一句";
+  ids.todayGoal.textContent = logs.length ? "学 1 课 + 复盘 1 条" : "学 1 课 + 考 1 轮";
+  renderExamHistory();
+}
+
+function markCurrentLessonLearned() {
+  const progress = readJson(STORAGE_KEYS.progress, { learned: {}, streakDates: [] });
+  const day = todayKey();
+  const learned = progress.learned || {};
+  const current = learned[currentModule] || { count: 0 };
+  learned[currentModule] = {
+    count: (current.count || 0) + 1,
+    lastDate: day,
+    lastTitle: lessons[currentModule].title,
+  };
+  const streakDates = Array.from(new Set([day, ...(progress.streakDates || [])])).slice(0, 30);
+  writeJson(STORAGE_KEYS.progress, { learned, streakDates });
+  renderProgress();
+}
+
+function exportLearningData() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    version: 1,
+    cases: readJson(STORAGE_KEYS.cases, []),
+    examLogs: readJson(STORAGE_KEYS.examLogs, []),
+    progress: readJson(STORAGE_KEYS.progress, { learned: {}, streakDates: [] }),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `dubai-english-coach-backup-${todayKey()}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function importLearningData(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(reader.result);
+      if (Array.isArray(payload.cases)) writeJson(STORAGE_KEYS.cases, payload.cases);
+      if (Array.isArray(payload.examLogs)) writeJson(STORAGE_KEYS.examLogs, payload.examLogs);
+      if (payload.progress) writeJson(STORAGE_KEYS.progress, payload.progress);
+      renderSavedCases();
+      renderProgress();
+    } catch {
+      ids.savedCases.innerHTML = "<p>导入失败，文件格式不对。</p>";
+    }
+  };
+  reader.readAsText(file);
 }
 
 function setModule(module) {
@@ -492,6 +619,7 @@ async function submitExamRound() {
   renderExamChat();
   ids.submitRound.textContent = "已完成";
   ids.examFeedback.textContent = "正在生成 AI 总结反馈...";
+  let feedbackText = lesson.feedback;
   try {
     const result = await callAiTeacher({
       task: "exam_feedback",
@@ -501,13 +629,27 @@ async function submitExamRound() {
       rounds: lesson.examRounds,
       answers: examAnswers,
     });
-    ids.examFeedback.textContent = result.content ? `总结反馈：${result.content}` : `总结反馈：${lesson.feedback}`;
+    feedbackText = result.content || lesson.feedback;
+    ids.examFeedback.textContent = `总结反馈：${feedbackText}`;
   } catch (error) {
     console.warn(error);
-    ids.examFeedback.textContent = `总结反馈：${lesson.feedback}`;
+    ids.examFeedback.textContent = `总结反馈：${feedbackText}`;
   }
   const logs = readJson(STORAGE_KEYS.examLogs, []);
-  writeJson(STORAGE_KEYS.examLogs, [{ module: currentModule, answers: examAnswers, createdAt: new Date().toISOString() }, ...logs].slice(0, 20));
+  writeJson(
+    STORAGE_KEYS.examLogs,
+    [
+      {
+        module: currentModule,
+        answers: examAnswers,
+        feedback: feedbackText,
+        summary: `完成 ${lesson.examRounds.length} 轮`,
+        createdAt: new Date().toISOString(),
+      },
+      ...logs,
+    ].slice(0, 30),
+  );
+  renderProgress();
 }
 
 $$(".nav-item").forEach((button) => button.addEventListener("click", () => setModule(button.dataset.module)));
@@ -527,6 +669,9 @@ $$(".speak-button").forEach((button) => {
 
 ids.submitRound.addEventListener("click", submitExamRound);
 ids.resetExam.addEventListener("click", renderExamSetup);
+ids.markLearned.addEventListener("click", markCurrentLessonLearned);
+ids.exportData.addEventListener("click", exportLearningData);
+ids.importData.addEventListener("change", () => importLearningData(ids.importData.files[0]));
 ids.generateCase.addEventListener("click", async () => {
   const raw = ids.coachInput.value.trim();
   if (!raw) {
@@ -550,3 +695,4 @@ ids.clearCases.addEventListener("click", () => {
 renderLesson();
 renderStage();
 renderSavedCases();
+renderProgress();

@@ -142,6 +142,9 @@ h3 {
 #generateCase,
 .quick-prompt,
 .speak-button,
+#markLearned,
+#exportData,
+.import-label,
 #clearCases,
 #saveGeneratedCase {
   min-height: 44px;
@@ -271,6 +274,10 @@ h3 {
 .learn-section.usable {
   background: var(--green-soft);
   border-color: #bdd5c7;
+}
+
+.drill-card {
+  background: #fbfbf8;
 }
 
 .pronunciation-card {
@@ -446,12 +453,45 @@ textarea {
 
 #submitRound,
 #generateCase,
-#saveGeneratedCase {
+#saveGeneratedCase,
+#markLearned {
   width: 100%;
   margin-top: 10px;
   background: #f3c36a;
   color: #251b0a;
   font-weight: 700;
+}
+
+#markLearned:disabled {
+  cursor: default;
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.progress-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.progress-grid div {
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: #fbfbf8;
+}
+
+.progress-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.progress-grid strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--blue);
+  font-size: 20px;
 }
 
 .quick-prompt {
@@ -503,6 +543,25 @@ textarea {
   margin-top: 12px;
 }
 
+.data-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#exportData,
+.import-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 @media (max-width: 1120px) {
   .layout {
     grid-template-columns: 160px minmax(0, 1fr);
@@ -526,7 +585,9 @@ textarea {
   .exam-main,
   .coach-actions,
   .pronunciation-grid,
-  .pronunciation-actions {
+  .pronunciation-actions,
+  .progress-grid,
+  .data-actions {
     grid-template-columns: 1fr;
   }
 
