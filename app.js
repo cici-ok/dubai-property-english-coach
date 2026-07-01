@@ -553,7 +553,11 @@ function markdownToHtml(text) {
 }
 
 async function callAiTeacher(payload) {
-  const endpoints = ["/.netlify/functions/ai-teacher", "/api/ai-teacher"];
+  const endpoints = [
+    window.AI_TEACHER_ENDPOINT,
+    "/.netlify/functions/ai-teacher",
+    "/api/ai-teacher",
+  ].filter(Boolean);
   const errors = [];
   for (const endpoint of endpoints) {
     try {
