@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dubai Property English Coach</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Dubai Property English Coach</p>
+          <h1>工作英语训练台</h1>
+        </div>
+        <div class="today-box">
+          <span>今日建议</span>
+          <strong>学 1 课 + 考 1 轮</strong>
+        </div>
+      </header>
+
+      <section class="layout">
+        <aside class="sidebar">
+          <p class="side-title">场景库</p>
+          <button class="nav-item active" data-module="lead">线索沟通</button>
+          <button class="nav-item" data-module="agent">Agent 协作</button>
+          <button class="nav-item" data-module="partner">新伙伴合作</button>
+          <button class="nav-item" data-module="project">楼盘介绍</button>
+        </aside>
+
+        <section class="workspace" aria-live="polite">
+          <nav class="stage-row">
+            <button class="stage active" data-stage="learn">学习</button>
+            <button class="stage" data-stage="exam">应用考试</button>
+            <button class="stage" data-stage="coach">AI 老师解析</button>
+          </nav>
+
+          <article class="module-head" id="moduleHead">
+            <p class="tag" id="moduleTag">TikTok lead</p>
+            <h2 id="moduleTitle">客户说 interested，先判断买租和户型</h2>
+            <p id="moduleContext">评论区客户只说感兴趣，目标是让客户回复买租、预算、户型和区域。</p>
+          </article>
+
+          <section id="learnView" class="view">
+            <div class="dialogue-card">
+              <div class="message incoming">
+                <span id="sourceRole">Customer</span>
+                <p id="sourceLine">Interested. Please send details.</p>
+              </div>
+              <div class="message outgoing">
+                <span>You</span>
+                <p id="modelLine"></p>
+              </div>
+            </div>
+
+            <div class="learn-stack">
+              <section class="learn-section">
+                <div class="section-title"><span>01</span><h3>核心表达</h3></div>
+                <p id="breakdown"></p>
+              </section>
+
+              <section class="learn-section pronunciation-card">
+                <div class="section-title"><span>02</span><h3>读音查询</h3></div>
+                <div class="pronunciation-grid">
+                  <div>
+                    <p class="pronunciation-label">重点句</p>
+                    <p class="pronunciation-text" id="pronunciationPhrase"></p>
+                    <p class="pronunciation-note" id="pronunciationHint"></p>
+                  </div>
+                  <div>
+                    <p class="pronunciation-label">拆开读</p>
+                    <p class="pronunciation-text" id="pronunciationParts"></p>
+                    <p class="pronunciation-note" id="pronunciationTip"></p>
+                  </div>
+                </div>
+                <div class="pronunciation-actions">
+                  <button class="speak-button" type="button" data-speak="phrase">读重点句</button>
+                  <button class="speak-button" type="button" data-speak="model">读示范回复</button>
+                </div>
+              </section>
+
+              <div class="learn-columns">
+                <section class="learn-section">
+                  <div class="section-title"><span>03</span><h3>关键词</h3></div>
+                  <ul id="vocabList"></ul>
+                </section>
+                <section class="learn-section">
+                  <div class="section-title"><span>04</span><h3>常用句库</h3></div>
+                  <ul id="sentenceList"></ul>
+                </section>
+              </div>
+
+              <div class="learn-columns">
+                <section class="learn-section warning">
+                  <div class="section-title"><span>05</span><h3>容易出错</h3></div>
+                  <p id="mistake"></p>
+                </section>
+                <section class="learn-section usable">
+                  <div class="section-title"><span>06</span><h3>今天直接用</h3></div>
+                  <p id="usage"></p>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section id="examView" class="view" hidden>
+            <div class="exam-main">
+              <section class="exam-task">
+                <p class="tag">Closed-book role play</p>
+                <h2 id="examTitle">多轮应用考试</h2>
+                <p id="examTask"></p>
+              </section>
+              <section class="exam-checklist">
+                <h3>评分点</h3>
+                <ul id="examChecklist"></ul>
+              </section>
+            </div>
+          </section>
+
+          <section id="coachView" class="view" hidden>
+            <section class="coach-hero">
+              <p class="tag">AI Teacher</p>
+              <h2>把工作里遇到的句子，变成你的学习案例</h2>
+              <p>看不懂英文就粘英文；想发英文但只会中文，就写中文。AI 老师会生成表达、解释原因、拆词，并存成案例。</p>
+            </section>
+
+            <section class="coach-panel">
+              <label for="coachInput">把你的原文或问题发给 AI</label>
+              <textarea id="coachInput" rows="7" placeholder="英文：Can we schedule a quick call tomorrow to discuss the new leads?
+中文：帮我用英文催 agent 今天下午5点前发房源视频，并说明是为了明天跟进线索。"></textarea>
+              <div class="coach-actions">
+                <button class="quick-prompt" data-sample="Can we schedule a quick call tomorrow to discuss the new leads?">解析英文</button>
+                <button class="quick-prompt" data-sample="帮我用英文催 agent 今天下午5点前发房源视频，并说明是为了明天跟进线索。">中文转英文</button>
+                <button id="generateCase" type="button">生成学习案例</button>
+              </div>
+            </section>
+
+            <section id="coachResult" class="case-result">
+              <h3>AI 老师会输出</h3>
+              <p>推荐英文、中文解释、重点词、工作案例、可练习对话。</p>
+            </section>
+          </section>
+        </section>
+
+        <aside class="rightbar">
+          <section class="side-card" id="dailyCard">
+            <p class="tag">飞书每日推送样例</p>
+            <h2>今日 09:30</h2>
+            <p id="dailyCopy"></p>
+          </section>
+
+          <section class="side-card dark" id="examCard" hidden>
+            <p class="tag">AI 应用考试</p>
+            <div class="exam-progress">
+              <span id="roundLabel">Round 1 / 4</span>
+              <button id="resetExam" type="button">重来</button>
+            </div>
+            <div class="exam-chat" id="examChat"></div>
+            <label for="replyBox">你的英文回复</label>
+            <textarea id="replyBox" rows="4" placeholder="用英文回复这一轮"></textarea>
+            <button id="submitRound" type="button">提交本轮</button>
+            <p class="feedback" id="examFeedback">连续完成几轮后，系统会统一指出问题。</p>
+          </section>
+
+          <section class="side-card" id="savedCaseCard">
+            <p class="tag">我的案例</p>
+            <h2 id="savedCount">0 个</h2>
+            <div id="savedCases" class="saved-list"></div>
+            <button id="clearCases" type="button">清空案例</button>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
