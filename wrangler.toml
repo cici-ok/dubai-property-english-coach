@@ -1,3 +1,8 @@
 name = "dubai-property-english-coach"
 pages_build_output_dir = "."
 compatibility_date = "2026-07-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dubai_property_english_coach"
+database_id = "787c82af-e841-4de5-a121-7ac3a614ed65"

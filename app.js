@@ -1,4 +1,5 @@
 const STORAGE_KEYS = {
+  auth: "dubaiEnglishCoach.auth",
   cases: "dubaiEnglishCoach.cases",
   examLogs: "dubaiEnglishCoach.examLogs",
   progress: "dubaiEnglishCoach.progress",
@@ -239,16 +240,33 @@ const lessons = {
   },
 };
 
-let currentModule = "lead";
+const lessonOrder = Object.keys(lessons);
+
+let currentLessonIndex = 0;
+let currentModule = lessonOrder[currentLessonIndex];
 let currentStage = "learn";
 let currentRound = 0;
 let examAnswers = [];
+let examMessages = [];
+let examLessonIds = [];
+let remoteSyncTimer = null;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
 const ids = {
   moduleHead: $("#moduleHead"),
+  loginView: $("#loginView"),
+  appShell: $("#appShell"),
+  loginForm: $("#loginForm"),
+  loginEmail: $("#loginEmail"),
+  loginPassword: $("#loginPassword"),
+  loginButton: $("#loginButton"),
+  loginError: $("#loginError"),
+  logoutButton: $("#logoutButton"),
+  userName: $("#userName"),
+  lessonPosition: $("#lessonPosition"),
+  lessonCategory: $("#lessonCategory"),
   moduleTag: $("#moduleTag"),
   moduleTitle: $("#moduleTitle"),
   moduleContext: $("#moduleContext"),
@@ -296,6 +314,16 @@ const ids = {
   exportData: $("#exportData"),
   importData: $("#importData"),
   clearCases: $("#clearCases"),
+  prevLesson: $("#prevLesson"),
+  nextLesson: $("#nextLesson"),
+  adminView: $("#adminView"),
+  adminNav: $("#adminNav"),
+  createUserForm: $("#createUserForm"),
+  newUserName: $("#newUserName"),
+  newUserPassword: $("#newUserPassword"),
+  createUserButton: $("#createUserButton"),
+  adminMessage: $("#adminMessage"),
+  userList: $("#userList"),
 };
 
 function escapeHtml(value) {
@@ -319,6 +347,115 @@ function writeJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function authState() {
+  return readJson(STORAGE_KEYS.auth, null);
+}
+
+function authHeaders() {
+  const auth = authState();
+  return auth?.token ? { authorization: `Bearer ${auth.token}` } : {};
+}
+
+function getCurrentLessonId() {
+  const safeIndex = ((currentLessonIndex % lessonOrder.length) + lessonOrder.length) % lessonOrder.length;
+  currentLessonIndex = safeIndex;
+  currentModule = lessonOrder[safeIndex];
+  return currentModule;
+}
+
+function getCurrentLesson() {
+  return lessons[getCurrentLessonId()];
+}
+
+function getAppState() {
+  return {
+    cases: readJson(STORAGE_KEYS.cases, []),
+    examLogs: readJson(STORAGE_KEYS.examLogs, []),
+    progress: readJson(STORAGE_KEYS.progress, { learned: {}, streakDates: [] }),
+  };
+}
+
+function applyAppState(state) {
+  if (!state) return;
+  if (Array.isArray(state.cases)) writeJson(STORAGE_KEYS.cases, state.cases);
+  if (Array.isArray(state.examLogs)) writeJson(STORAGE_KEYS.examLogs, state.examLogs);
+  if (state.progress) writeJson(STORAGE_KEYS.progress, state.progress);
+}
+
+async function loadRemoteState() {
+  try {
+    const response = await fetch("/api/state", { headers: authHeaders() });
+    if (!response.ok) return;
+    const data = await response.json();
+    applyAppState(data.state);
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
+function syncRemoteState() {
+  clearTimeout(remoteSyncTimer);
+  remoteSyncTimer = setTimeout(async () => {
+    try {
+      await fetch("/api/state", {
+        method: "POST",
+        headers: { "content-type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ state: getAppState() }),
+      });
+    } catch (error) {
+      console.warn(error);
+    }
+  }, 300);
+}
+
+async function renderAuth() {
+  const auth = authState();
+  const isLoggedIn = Boolean(auth?.token);
+  ids.loginView.hidden = isLoggedIn;
+  ids.appShell.hidden = !isLoggedIn;
+  const isAdmin = auth?.user?.role === "admin";
+  ids.userName.textContent = auth?.user?.name ? `Hi, ${auth.user.name}` : "今日建议";
+  $$(".admin-only").forEach((item) => {
+    item.hidden = !isAdmin;
+  });
+  if (isLoggedIn) {
+    await loadRemoteState();
+    renderLesson();
+    renderStage();
+    renderSavedCases();
+    renderProgress();
+    if (isAdmin) loadUsers();
+  }
+}
+
+async function login(email, password) {
+  ids.loginError.textContent = "";
+  ids.loginButton.textContent = "登录中...";
+  ids.loginButton.disabled = true;
+  try {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "登录失败");
+    writeJson(STORAGE_KEYS.auth, data);
+    ids.loginPassword.value = "";
+    await renderAuth();
+  } catch (error) {
+    ids.loginError.textContent = error.message;
+  } finally {
+    ids.loginButton.textContent = "登录";
+    ids.loginButton.disabled = false;
+  }
+}
+
+function logout() {
+  localStorage.removeItem(STORAGE_KEYS.auth);
+  renderAuth();
+}
+
 function renderList(target, rows) {
   target.innerHTML = rows.map(([term, meaning]) => `<li><strong>${escapeHtml(term)}</strong><span>${escapeHtml(meaning)}</span></li>`).join("");
 }
@@ -328,7 +465,11 @@ function todayKey() {
 }
 
 function renderLesson() {
-  const lesson = lessons[currentModule];
+  const lesson = getCurrentLesson();
+  const progress = readJson(STORAGE_KEYS.progress, { learned: {}, streakDates: [] });
+  const isLearned = Boolean(progress.learned?.[currentModule]);
+  ids.lessonPosition.textContent = `${currentLessonIndex + 1} / ${lessonOrder.length}`;
+  ids.lessonCategory.textContent = lesson.tag;
   ids.moduleTag.textContent = lesson.tag;
   ids.moduleTitle.textContent = lesson.title;
   ids.moduleContext.textContent = lesson.context;
@@ -346,47 +487,66 @@ function renderLesson() {
   renderList(ids.vocabList, lesson.vocab);
   renderList(ids.sentenceList, lesson.sentences);
   renderList(ids.drillList, lesson.drills);
+  ids.markLearned.textContent = isLearned ? "已加入考试池" : "标记学会了";
+  ids.markLearned.disabled = isLearned;
   renderProgress();
 }
 
 function renderExamSetup() {
-  const lesson = lessons[currentModule];
-  ids.examTitle.textContent = `${lesson.title}：多轮考试`;
-  ids.examTask.textContent = lesson.examTask;
-  renderList(ids.examChecklist, lesson.checklist);
+  const progress = readJson(STORAGE_KEYS.progress, { learned: {}, streakDates: [] });
+  examLessonIds = Object.keys(progress.learned || {}).filter((id) => lessons[id]);
   currentRound = 0;
   examAnswers = [];
+  examMessages = [];
   ids.replyBox.value = "";
   ids.submitRound.textContent = "提交本轮";
-  ids.examFeedback.textContent = "连续完成几轮后，系统会统一指出问题。";
+  ids.submitRound.disabled = examLessonIds.length === 0;
+  if (!examLessonIds.length) {
+    ids.examTitle.textContent = "先完成学习，再进入应用考试";
+    ids.examTask.textContent = "把学习里的知识点标记“学会了”之后，系统会用这些内容模拟多轮对话。";
+    ids.examChecklist.innerHTML = "<li><strong>学习</strong><span>至少标记 1 个知识点学会</span></li>";
+    ids.roundLabel.textContent = "未开始";
+    ids.examChat.innerHTML = "<p class=\"chat-line bot\">先去学习页标记一个知识点。</p>";
+    ids.examFeedback.textContent = "考试只基于你已经学会的内容出题。";
+    return;
+  }
+  const lessonId = examLessonIds.includes(currentModule) ? currentModule : examLessonIds[0];
+  const lesson = lessons[lessonId];
+  ids.examTitle.textContent = "基于已学内容的多轮应用考试";
+  ids.examTask.textContent = `本轮会从 ${examLessonIds.length} 个已学知识点里模拟真实对话。先从：${lesson.title} 开始。`;
+  renderList(ids.examChecklist, lesson.checklist);
+  examMessages = [{ role: "assistant", text: lesson.examRounds[0] }];
+  ids.examFeedback.textContent = "不要看学习内容，直接用英文回复。AI 会根据你的回复继续追问。";
   renderExamChat();
 }
 
 function renderExamChat() {
-  const lesson = lessons[currentModule];
-  ids.roundLabel.textContent = `Round ${Math.min(currentRound + 1, lesson.examRounds.length)} / ${lesson.examRounds.length}`;
-  ids.examChat.innerHTML = lesson.examRounds
-    .slice(0, currentRound + 1)
-    .map((prompt, index) => {
-      const answer = examAnswers[index];
-      const answerHtml = answer ? `<p class="chat-line user">You: ${escapeHtml(answer)}</p>` : "";
-      return `<p class="chat-line bot">${escapeHtml(prompt)}</p>${answerHtml}`;
+  ids.roundLabel.textContent = `Round ${Math.min(currentRound + 1, 4)} / 4`;
+  ids.examChat.innerHTML = examMessages
+    .map((message) => {
+      const className = message.role === "user" ? "user" : "bot";
+      const label = message.role === "user" ? "You: " : "";
+      return `<p class="chat-line ${className}">${label}${escapeHtml(message.text)}</p>`;
     })
     .join("");
+  ids.examChat.scrollTop = ids.examChat.scrollHeight;
 }
 
 function renderStage() {
   const isLearn = currentStage === "learn";
   const isExam = currentStage === "exam";
   const isCoach = currentStage === "coach";
-  ids.moduleHead.hidden = isCoach;
+  const isAdmin = currentStage === "admin";
+  ids.moduleHead.hidden = isCoach || isAdmin;
   ids.learnView.hidden = !isLearn;
   ids.examView.hidden = !isExam;
   ids.coachView.hidden = !isCoach;
+  ids.adminView.hidden = !isAdmin;
   ids.dailyCard.hidden = !isLearn;
   ids.examCard.hidden = !isExam;
-  ids.savedCaseCard.hidden = false;
+  ids.savedCaseCard.hidden = isAdmin;
   if (isExam) renderExamSetup();
+  if (isAdmin) loadUsers();
   renderProgress();
 }
 
@@ -421,13 +581,13 @@ function renderProgress() {
   const cases = readJson(STORAGE_KEYS.cases, []);
   const logs = readJson(STORAGE_KEYS.examLogs, []);
   const learnedModules = Object.keys(progress.learned || {}).length;
-  ids.learnedCount.textContent = `${learnedModules}/4`;
+  ids.learnedCount.textContent = `${learnedModules}/${lessonOrder.length}`;
   ids.examCount.textContent = `${logs.length}`;
   ids.caseCount.textContent = `${cases.length}`;
-  const doneToday = Boolean(progress.learned?.[currentModule]?.lastDate === todayKey());
-  ids.markLearned.textContent = doneToday ? "今天已学完" : "标记今天学完";
-  ids.markLearned.disabled = doneToday;
-  ids.todayTitle.textContent = doneToday ? "今天这课已完成" : "今天先学这一句";
+  const learnedCurrent = Boolean(progress.learned?.[currentModule]);
+  ids.markLearned.textContent = learnedCurrent ? "已加入考试池" : "标记学会了";
+  ids.markLearned.disabled = learnedCurrent;
+  ids.todayTitle.textContent = learnedCurrent ? "这个知识点已学会" : "当前知识点";
   ids.todayGoal.textContent = logs.length ? "学 1 课 + 复盘 1 条" : "学 1 课 + 考 1 轮";
   renderExamHistory();
 }
@@ -444,6 +604,8 @@ function markCurrentLessonLearned() {
   };
   const streakDates = Array.from(new Set([day, ...(progress.streakDates || [])])).slice(0, 30);
   writeJson(STORAGE_KEYS.progress, { learned, streakDates });
+  syncRemoteState();
+  renderLesson();
   renderProgress();
 }
 
@@ -475,6 +637,7 @@ function importLearningData(file) {
       if (payload.progress) writeJson(STORAGE_KEYS.progress, payload.progress);
       renderSavedCases();
       renderProgress();
+      syncRemoteState();
     } catch {
       ids.savedCases.innerHTML = "<p>导入失败，文件格式不对。</p>";
     }
@@ -482,9 +645,9 @@ function importLearningData(file) {
   reader.readAsText(file);
 }
 
-function setModule(module) {
-  currentModule = module;
-  $$(".nav-item").forEach((button) => button.classList.toggle("active", button.dataset.module === module));
+function moveLesson(direction) {
+  currentLessonIndex = (currentLessonIndex + direction + lessonOrder.length) % lessonOrder.length;
+  currentModule = lessonOrder[currentLessonIndex];
   renderLesson();
   renderStage();
 }
@@ -492,6 +655,7 @@ function setModule(module) {
 function setStage(stage) {
   currentStage = stage;
   $$(".stage").forEach((button) => button.classList.toggle("active", button.dataset.stage === stage));
+  $$("[data-stage-jump]").forEach((button) => button.classList.toggle("active", button.dataset.stageJump === stage));
   renderStage();
 }
 
@@ -563,7 +727,7 @@ async function callAiTeacher(payload) {
     try {
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...authHeaders() },
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error(`${endpoint} ${response.status}`);
@@ -600,40 +764,83 @@ function saveCase(item) {
   const cases = readJson(STORAGE_KEYS.cases, []);
   const next = [{ ...item, createdAt: new Date().toISOString() }, ...cases].slice(0, 20);
   writeJson(STORAGE_KEYS.cases, next);
+  syncRemoteState();
   renderSavedCases();
 }
 
+function learnedLessonSummaries() {
+  const progress = readJson(STORAGE_KEYS.progress, { learned: {}, streakDates: [] });
+  return Object.keys(progress.learned || {})
+    .filter((id) => lessons[id])
+    .map((id) => ({
+      id,
+      type: lessons[id].tag,
+      title: lessons[id].title,
+      task: lessons[id].examTask,
+      checklist: lessons[id].checklist,
+      usefulSentences: lessons[id].sentences.map(([sentence]) => sentence),
+    }));
+}
+
 async function submitExamRound() {
-  const lesson = lessons[currentModule];
+  const learned = learnedLessonSummaries();
   const text = ids.replyBox.value.trim();
   if (!text) {
     ids.examFeedback.textContent = "先写这一轮英文回复，再提交。";
     return;
   }
-  examAnswers[currentRound] = text;
+  if (!learned.length) {
+    ids.examFeedback.textContent = "先去学习页标记至少一个知识点学会。";
+    return;
+  }
+  examAnswers.push(text);
+  examMessages.push({ role: "user", text });
   ids.replyBox.value = "";
+  renderExamChat();
 
-  if (currentRound < lesson.examRounds.length - 1) {
+  if (currentRound < 3) {
+    ids.submitRound.disabled = true;
+    ids.examFeedback.textContent = "AI 正在根据你的回复继续追问...";
+    let nextPrompt = "";
+    try {
+      const result = await callAiTeacher({
+        task: "exam_next",
+        quality: "standard",
+        learnedLessons: learned,
+        messages: examMessages,
+      });
+      nextPrompt = result.content || "";
+    } catch (error) {
+      console.warn(error);
+    }
+    if (!nextPrompt) {
+      const fallbackLesson = lessons[examLessonIds[currentRound % examLessonIds.length] || currentModule];
+      nextPrompt = fallbackLesson.examRounds[Math.min(currentRound + 1, fallbackLesson.examRounds.length - 1)];
+    }
+    examMessages.push({ role: "assistant", text: nextPrompt.replace(/^["']|["']$/g, "") });
     currentRound += 1;
     renderExamChat();
-    ids.examFeedback.textContent = "已记录这一轮。继续回复下一轮。";
+    ids.examFeedback.textContent = "继续用英文回复下一轮。";
+    ids.submitRound.disabled = false;
     return;
   }
 
   renderExamChat();
   ids.submitRound.textContent = "已完成";
+  ids.submitRound.disabled = true;
   ids.examFeedback.textContent = "正在生成 AI 总结反馈...";
-  let feedbackText = lesson.feedback;
+  let feedbackText = "整体能完成对话，但要注意问清需求、不要承诺房源或收益，并让表达更自然。";
   try {
     const result = await callAiTeacher({
       task: "exam_feedback",
       quality: "standard",
-      module: currentModule,
-      checklist: lesson.checklist,
-      rounds: lesson.examRounds,
+      module: "learned-pool",
+      checklist: learned.flatMap((item) => item.checklist || []),
+      rounds: examMessages.filter((item) => item.role === "assistant").map((item) => item.text),
       answers: examAnswers,
+      messages: examMessages,
     });
-    feedbackText = result.content || lesson.feedback;
+    feedbackText = result.content || feedbackText;
     ids.examFeedback.textContent = `总结反馈：${feedbackText}`;
   } catch (error) {
     console.warn(error);
@@ -644,19 +851,59 @@ async function submitExamRound() {
     STORAGE_KEYS.examLogs,
     [
       {
-        module: currentModule,
+        module: examLessonIds.join(","),
         answers: examAnswers,
+        messages: examMessages,
         feedback: feedbackText,
-        summary: `完成 ${lesson.examRounds.length} 轮`,
+        summary: "完成 4 轮动态对话",
         createdAt: new Date().toISOString(),
       },
       ...logs,
     ].slice(0, 30),
   );
+  syncRemoteState();
   renderProgress();
 }
 
-$$(".nav-item").forEach((button) => button.addEventListener("click", () => setModule(button.dataset.module)));
+async function loadUsers() {
+  if (!authState()?.token || authState()?.user?.role !== "admin") return;
+  try {
+    const response = await fetch("/api/admin/users", { headers: authHeaders() });
+    if (!response.ok) throw new Error("无法读取用户列表");
+    const data = await response.json();
+    ids.userList.innerHTML = (data.users || [])
+      .map((user) => `<article><strong>${escapeHtml(user.name || user.email)}</strong><span>${escapeHtml(user.role)} · ${escapeHtml(user.created_at || "")}</span></article>`)
+      .join("") || "<p>还没有学员。</p>";
+  } catch (error) {
+    ids.userList.innerHTML = `<p>${escapeHtml(error.message)}</p>`;
+  }
+}
+
+async function createUser(username, password) {
+  ids.adminMessage.textContent = "";
+  ids.createUserButton.textContent = "保存中...";
+  ids.createUserButton.disabled = true;
+  try {
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "content-type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ email: username, name: username, password, role: "user" }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "创建失败");
+    ids.adminMessage.textContent = "账号已创建或已重置密码。";
+    ids.newUserName.value = "";
+    ids.newUserPassword.value = "";
+    await loadUsers();
+  } catch (error) {
+    ids.adminMessage.textContent = error.message;
+  } finally {
+    ids.createUserButton.textContent = "创建 / 重置账号";
+    ids.createUserButton.disabled = false;
+  }
+}
+
+$$("[data-stage-jump]").forEach((button) => button.addEventListener("click", () => setStage(button.dataset.stageJump)));
 $$(".stage").forEach((button) => button.addEventListener("click", () => setStage(button.dataset.stage)));
 $$(".quick-prompt").forEach((button) => {
   button.addEventListener("click", () => {
@@ -674,8 +921,15 @@ $$(".speak-button").forEach((button) => {
 ids.submitRound.addEventListener("click", submitExamRound);
 ids.resetExam.addEventListener("click", renderExamSetup);
 ids.markLearned.addEventListener("click", markCurrentLessonLearned);
+ids.prevLesson.addEventListener("click", () => moveLesson(-1));
+ids.nextLesson.addEventListener("click", () => moveLesson(1));
 ids.exportData.addEventListener("click", exportLearningData);
 ids.importData.addEventListener("change", () => importLearningData(ids.importData.files[0]));
+ids.loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  login(ids.loginEmail.value.trim(), ids.loginPassword.value);
+});
+ids.logoutButton.addEventListener("click", logout);
 ids.generateCase.addEventListener("click", async () => {
   const raw = ids.coachInput.value.trim();
   if (!raw) {
@@ -693,10 +947,12 @@ ids.generateCase.addEventListener("click", async () => {
 });
 ids.clearCases.addEventListener("click", () => {
   writeJson(STORAGE_KEYS.cases, []);
+  syncRemoteState();
   renderSavedCases();
 });
+ids.createUserForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  createUser(ids.newUserName.value.trim().toLowerCase(), ids.newUserPassword.value);
+});
 
-renderLesson();
-renderStage();
-renderSavedCases();
-renderProgress();
+renderAuth();

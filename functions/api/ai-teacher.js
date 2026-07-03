@@ -1,27 +1,11 @@
+import { cors, json, requireUser } from "../_shared/auth.js";
+
 const DEFAULTS = {
   opencodeBaseUrl: "https://opencode.ai/zen/v1",
   opencodeModel: "deepseek-v4-flash-free",
   gptsapiBaseUrl: "https://api.gptsapi.net/v1",
   gptsapiModel: "gpt-4.1-mini",
 };
-
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "content-type": "application/json; charset=utf-8",
-      "cache-control": "no-store",
-    },
-  });
-}
-
-function cors(response) {
-  const next = new Response(response.body, response);
-  next.headers.set("access-control-allow-origin", "*");
-  next.headers.set("access-control-allow-methods", "POST, OPTIONS");
-  next.headers.set("access-control-allow-headers", "content-type");
-  return next;
-}
 
 function routes(env, task, quality) {
   const free = {
@@ -52,6 +36,16 @@ function systemPrompt() {
 }
 
 function userPrompt(payload) {
+  if (payload.task === "exam_next") {
+    return [
+      "你正在扮演业务英语应用考试中的对话对象。根据学员已学会的知识点，继续自然追问一轮。",
+      "要求：只输出一句英文角色台词，20词以内；不要解释；不要给答案；贴近日常工作对话。",
+      "可扮演 Customer、Agent 或 Partner。",
+      `已学知识点：${JSON.stringify(payload.learnedLessons || [])}`,
+      `历史对话：${JSON.stringify(payload.messages || [])}`,
+    ].join("\n");
+  }
+
   if (payload.task === "exam_feedback") {
     return [
       "请根据以下多轮应用考试，给中文反馈，并给一版更自然的英文表达建议。",
@@ -65,11 +59,14 @@ function userPrompt(payload) {
       `评分点：${JSON.stringify(payload.checklist || [])}`,
       `AI 提问：${JSON.stringify(payload.rounds || [])}`,
       `用户回答：${JSON.stringify(payload.answers || [])}`,
+      `完整对话：${JSON.stringify(payload.messages || [])}`,
     ].join("\n");
   }
 
   return [
     "请把下面内容生成一个工作英语学习案例。",
+    "风格要求：英文必须自然、日常、地道，像 WhatsApp/飞书/工作聊天里真人会说的话；避免生硬翻译、过度正式、过度销售。",
+    "业务边界：我们是线索收集和清洗服务，不要说自己持有房源，不要承诺收益。",
     "输出格式：",
     "1. 推荐英文/中文意思",
     "2. 为什么这么说",
@@ -116,6 +113,8 @@ export async function onRequest(context) {
   const { request, env } = context;
   if (request.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
   if (request.method !== "POST") return cors(json({ error: "Method not allowed" }, 405));
+  const user = await requireUser(request, env);
+  if (!user) return cors(json({ error: "Unauthorized" }, 401));
 
   let payload;
   try {

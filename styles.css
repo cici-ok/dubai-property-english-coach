@@ -27,6 +27,7 @@ body {
 }
 
 button,
+input,
 textarea {
   font: inherit;
 }
@@ -37,6 +38,49 @@ button {
 
 [hidden] {
   display: none !important;
+}
+
+.login-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: min(460px, 100%);
+  padding: 28px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.login-card h1 {
+  margin-bottom: 24px;
+  font-size: 38px;
+}
+
+.login-card input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #6f7d78;
+  padding: 10px;
+}
+
+#loginButton {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 18px;
+  border: 1px solid #f3c36a;
+  background: #f3c36a;
+  color: #251b0a;
+  font-weight: 700;
+}
+
+.login-error {
+  min-height: 22px;
+  margin: 12px 0 0;
+  color: #9f2f22;
 }
 
 .shell {
@@ -118,6 +162,14 @@ h3 {
   font-size: 20px;
 }
 
+#logoutButton {
+  min-height: 32px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  background: #f8f9f7;
+  color: var(--muted);
+}
+
 .layout {
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr) 340px;
@@ -146,11 +198,37 @@ h3 {
 #exportData,
 .import-label,
 #clearCases,
-#saveGeneratedCase {
+#saveGeneratedCase,
+#createUserButton,
+#prevLesson,
+#nextLesson {
   min-height: 44px;
   border: 1px solid var(--line);
   background: #f8f9f7;
   color: var(--ink);
+}
+
+.lesson-meter {
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #fbfbf8;
+}
+
+.lesson-meter strong,
+.lesson-meter span {
+  display: block;
+}
+
+.lesson-meter strong {
+  color: var(--blue);
+  font-size: 24px;
+}
+
+.lesson-meter span {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .nav-item {
@@ -173,7 +251,7 @@ h3 {
 
 .stage-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 8px;
   margin-bottom: 18px;
 }
@@ -247,7 +325,8 @@ h3 {
 
 .learn-columns,
 .exam-main,
-.coach-actions {
+.coach-actions,
+.lesson-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
@@ -260,7 +339,8 @@ h3 {
 .learn-section,
 .exam-checklist,
 .coach-panel,
-.case-result {
+.case-result,
+.admin-panel {
   padding: 18px;
   border: 1px solid var(--line);
   background: #fffdf9;
@@ -451,14 +531,29 @@ textarea {
   line-height: 1.45;
 }
 
+.admin-form input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #6f7d78;
+  padding: 10px;
+}
+
 #submitRound,
 #generateCase,
 #saveGeneratedCase,
-#markLearned {
+#markLearned,
+#createUserButton {
   width: 100%;
   margin-top: 10px;
   background: #f3c36a;
   color: #251b0a;
+  font-weight: 700;
+}
+
+.lesson-actions button {
+  background: var(--blue-soft);
+  border-color: #c4d4e7;
+  color: var(--blue);
   font-weight: 700;
 }
 
@@ -520,22 +615,31 @@ textarea {
   gap: 10px;
 }
 
-.saved-list article {
+.saved-list article,
+.user-list article {
   padding: 10px;
   border: 1px solid var(--line);
   background: #fbfbf8;
 }
 
 .saved-list strong,
-.saved-list span {
+.saved-list span,
+.user-list strong,
+.user-list span {
   display: block;
 }
 
-.saved-list span {
+.saved-list span,
+.user-list span {
   margin-top: 4px;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.user-list {
+  display: grid;
+  gap: 10px;
 }
 
 #clearCases {
@@ -584,6 +688,7 @@ textarea {
   .learn-columns,
   .exam-main,
   .coach-actions,
+  .lesson-actions,
   .pronunciation-grid,
   .pronunciation-actions,
   .progress-grid,
