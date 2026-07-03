@@ -8,6 +8,13 @@ const DEFAULTS = {
 };
 
 function routes(env, task, quality) {
+  const freeFirstTasks = new Set([
+    "coach_case",
+    "coach_chat",
+    "coach_summarize",
+    "exam_next",
+    "exam_feedback",
+  ]);
   const free = {
     provider: "opencode",
     baseUrl: env.OPENCODE_BASE_URL || DEFAULTS.opencodeBaseUrl,
@@ -20,8 +27,8 @@ function routes(env, task, quality) {
     apiKey: env.GPTSAPI_API_KEY || env.GPTAPI_API_KEY,
     model: env.GPTAPI_QUALITY_MODEL || DEFAULTS.gptsapiModel,
   };
-  if (quality === "high") return [paid, free];
-  if (task === "exam_feedback") return [free, paid];
+  if (freeFirstTasks.has(task)) return [free, paid];
+  if (quality === "high" || quality === "paid") return [paid, free];
   return [free, paid];
 }
 

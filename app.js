@@ -988,7 +988,7 @@ async function askTeacher(raw) {
   try {
     const result = await callAiTeacher({
       task: "coach_chat",
-      quality: "high",
+      quality: "standard",
       input: raw,
       messages: teacherMessages,
     });
@@ -1012,7 +1012,7 @@ async function summarizeTeacherConversation() {
   try {
     const result = await callAiTeacher({
       task: "coach_summarize",
-      quality: "high",
+      quality: "standard",
       messages: teacherMessages,
     });
     if (result.content) {

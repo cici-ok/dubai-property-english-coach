@@ -25,8 +25,15 @@ function json(statusCode, body) {
 }
 
 function pickRoute(task, quality) {
-  if (quality === "high") return [MODEL_POLICY.paid, MODEL_POLICY.free];
-  if (task === "exam_feedback") return [MODEL_POLICY.free, MODEL_POLICY.paid];
+  const freeFirstTasks = new Set([
+    "coach_case",
+    "coach_chat",
+    "coach_summarize",
+    "exam_next",
+    "exam_feedback",
+  ]);
+  if (freeFirstTasks.has(task)) return [MODEL_POLICY.free, MODEL_POLICY.paid];
+  if (quality === "high" || quality === "paid") return [MODEL_POLICY.paid, MODEL_POLICY.free];
   return [MODEL_POLICY.free, MODEL_POLICY.paid];
 }
 
