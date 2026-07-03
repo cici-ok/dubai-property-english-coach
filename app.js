@@ -240,7 +240,102 @@ const lessons = {
   },
 };
 
-const lessonOrder = Object.keys(lessons);
+function buildExpandedLessons() {
+  const scenarios = [
+    ["lead_budget", "Lead qualification", "客户只问价格，先问预算范围", "Customer", "How much is it?", "The price depends on the unit type and availability. May I know your budget range and whether you are looking to buy or rent?", "price depends on 用来避免报死价；budget range 比 your budget 更礼貌。", "May I know your budget range?", "May I know / your BUdget range", "budget range", "预算范围"],
+    ["lead_area", "Lead qualification", "客户问哪个区域好，先判断用途", "Customer", "Which area is best?", "It depends on your purpose. Are you buying for investment or personal use?", "It depends on your purpose 很自然，先把推荐区域变成需求判断。", "Are you buying for investment or personal use?", "Are you BUYing / for inVESTment / or PERsonal use", "purpose", "用途"],
+    ["lead_whatsapp", "Lead qualification", "把客户引导到 WhatsApp 继续沟通", "Customer", "Send me details.", "Sure. Could you share your WhatsApp number so I can send the details and understand your requirements better?", "understand your requirements better 能体现先收集需求，不像硬推销。", "Could you share your WhatsApp number?", "Could you SHARE / your WHATSapp number", "requirements", "需求"],
+    ["lead_old", "Lead follow-up", "跟进很久前的老线索", "Customer", "I commented a while ago.", "Hi, not sure if you are still looking, but I noticed your old comment on a Dubai property video. Are you still considering Dubai property?", "not sure if you are still looking 适合老线索，不会显得唐突。", "Are you still considering Dubai property?", "Are you STILL / considering / Dubai PROperty", "still looking", "还在找"],
+    ["lead_rent", "Rental lead", "租房客户先问入住时间", "Customer", "I need a 1-bedroom for rent.", "Sure. When are you planning to move in, and which area do you prefer?", "租房先问 move in 时间和区域，后面再聊预算。", "When are you planning to move in?", "When are you PLANning / to MOVE in", "move in", "入住"],
+    ["lead_short_term", "Rental lead", "短租客户问日期和人数", "Customer", "Do you have short-term rentals?", "For short-term rentals, may I know your check-in date, length of stay, and how many people will stay?", "短租重点是日期、入住时长、人数。", "May I know your check-in date?", "May I KNOW / your CHECK-in date", "length of stay", "入住时长"],
+    ["agent_video_deadline", "Agent collaboration", "催 agent 按时发视频", "Agent", "I will send it later.", "Thanks. Could you please send it before 5 PM Dubai time? We need it for tomorrow's lead follow-up.", "Could you please 加截止时间和用途，催促但不生硬。", "Could you please send it before 5 PM Dubai time?", "Could you PLEASE / SEND it / before FIVE PM", "deadline", "截止时间"],
+    ["agent_availability", "Agent collaboration", "确认房源是否还在", "Agent", "The client asked about this unit.", "Could you please confirm if the unit is still available and share the latest price?", "available 和 latest price 是跟 agent 核实房源最常用的组合。", "Is the unit still available?", "Is the UNIT / still aVAILable", "available", "可售/可租"],
+    ["agent_lead_status", "Agent collaboration", "问线索进展", "Agent", "I spoke with the client.", "Thanks. Could you share the latest status and the next step for this lead?", "latest status + next step 是运营跟进最核心的表达。", "Could you share the latest status?", "Could you SHARE / the LAtest status", "next step", "下一步"],
+    ["agent_viewing", "Agent collaboration", "确认看房时间", "Agent", "The client wants a viewing.", "Great. Has the client confirmed the viewing time, or do we still need to follow up?", "confirmed the viewing time 是确认看房时间的自然说法。", "Has the client confirmed the viewing time?", "Has the CLIent / conFIRMED / the VIEWing time", "viewing", "看房"],
+    ["agent_call", "Agent collaboration", "和 agent 约短会", "Agent", "We have several new leads.", "Could we schedule a quick call tomorrow Dubai time to align on these new leads?", "align on 表示同步，不是很正式但工作里自然。", "Could we schedule a quick call?", "Could we SCHEDule / a QUICK call", "align on", "同步"],
+    ["agent_materials", "Agent collaboration", "让 agent 补齐楼盘素材", "Agent", "What materials do you need?", "Could you send the property video, floor plan, starting price, and payment plan?", "素材需求要一次讲清，不只说 send materials。", "Could you send the floor plan and payment plan?", "Could you SEND / the FLOOR plan / and PAYment plan", "floor plan", "户型图"],
+    ["partner_intro", "Business partnership", "介绍我们不是中介持房源", "Partner", "What does your company do?", "We focus on generating and qualifying Dubai property leads, then matching suitable leads with partner agents.", "generating and qualifying leads 能准确表达业务定位。", "We focus on qualifying Dubai property leads.", "We FOcus on / QUALifying / Dubai property LEADS", "qualify leads", "筛选线索"],
+    ["partner_commission", "Business partnership", "问分佣模式", "Partner", "How do we work on commission?", "How do you usually structure commission for referred leads?", "structure commission 比 talk about commission 更商务自然。", "How do you structure commission?", "How do you STRUCture / comMISsion", "commission", "佣金"],
+    ["partner_shared", "Business partnership", "先从共享线索开始合作", "Partner", "Can you give us exclusive leads?", "We can start with shared leads first and review the conversion quality before discussing exclusivity.", "先 shared leads，再看 conversion quality，避免过早承诺独家。", "Let's review conversion quality first.", "Let's reVIEW / conVERsion quality / first", "exclusivity", "独家"],
+    ["partner_quality", "Business partnership", "讨论线索质量", "Partner", "What kind of clients do you have?", "Most leads are from Dubai property content. We usually qualify their budget, purpose, unit type, and preferred area first.", "讲清线索来源和筛选字段，可信度更高。", "We qualify their budget and purpose first.", "We QUALify / their BUdget / and PURpose first", "lead quality", "线索质量"],
+    ["project_location", "Project introduction", "介绍楼盘位置", "Client", "Where is the project located?", "The project is located in JVC, with convenient access to main roads and nearby communities.", "located in + access to 是介绍位置最稳的结构。", "The project is located in JVC.", "The PROject / is loCAted in / JVC", "located in", "位于"],
+    ["project_price", "Project introduction", "介绍起价但不报死", "Client", "What is the price?", "Prices start from 750k AED, depending on unit size and current availability.", "depending on unit size and availability 可以避免价格说死。", "Prices start from 750k AED.", "PRIces / start from / seven fifty K AED", "starting price", "起价"],
+    ["project_payment", "Project introduction", "解释付款计划", "Client", "Is there a payment plan?", "Yes, the project offers a flexible payment plan, so buyers do not need to pay the full amount upfront.", "upfront 是一次性 upfront payment 的常用词。", "It offers a flexible payment plan.", "It OFFers / a FLEXible / PAYment plan", "upfront", "预先一次性"],
+    ["project_handover", "Project introduction", "讲交房时间", "Client", "When is the handover?", "The expected handover is in 2027. We should confirm the latest timeline with the developer before sharing final details.", "expected handover 比 guaranteed handover 更稳妥。", "The expected handover is in 2027.", "The exPECted / HANDover / is in twenty twenty seven", "handover", "交房"],
+    ["project_roi", "Project introduction", "回答投资回报但不保证", "Client", "Can you guarantee ROI?", "I cannot guarantee ROI, but we can compare rental demand, entry price, and similar projects in the area.", "不能保证收益，用 compare rental demand 转成分析。", "I cannot guarantee ROI.", "I CANnot / guaranTEE / ROI", "rental demand", "租赁需求"],
+    ["project_developer", "Project introduction", "介绍开发商", "Client", "Who is the developer?", "The developer is the company responsible for building and delivering the project. We should also check their past handover record.", "past handover record 是评估开发商常用表达。", "We should check their past handover record.", "We should CHECK / their past HANDover record", "developer", "开发商"],
+    ["content_script", "Content operations", "和 agent 沟通拍摄脚本", "Agent", "What should I record?", "Please record the entrance, living room, kitchen, bedroom, balcony view, amenities, and the building exterior.", "房源视频要具体列镜头，不只说 record everything。", "Please record the balcony view and amenities.", "Please reCORD / the BALcony view / and aMENities", "amenities", "配套设施"],
+    ["content_caption", "Content operations", "写视频文案要自然", "Team", "Can you write a caption?", "Here is a simple caption: 1-bedroom in JVC with a flexible payment plan and easy access to main roads.", "caption 要短，先放户型、区域、付款计划和交通。", "Easy access to main roads.", "EAzy access / to MAIN roads", "caption", "文案"],
+    ["content_missing", "Content operations", "素材不完整时补问", "Agent", "I sent the video.", "Thanks. Could you also send the floor plan and the latest starting price? We need them before posting.", "also send 是补问素材最自然。", "Could you also send the floor plan?", "Could you ALso / send the FLOOR plan", "posting", "发布"],
+    ["team_update", "Daily work", "给团队同步进展", "Team", "Any updates today?", "Quick update: we received three new leads, one client asked for a viewing, and two leads need follow-up tomorrow.", "Quick update 是团队同步里很自然的开头。", "Quick update: we received three new leads.", "QUICK update / we reCEIVED / three new LEADS", "follow-up", "跟进"],
+    ["team_blocker", "Daily work", "说明当前卡点", "Team", "Why is this delayed?", "The main blocker is that we are still waiting for the latest property video and price confirmation from the agent.", "main blocker 是讲卡点的自然表达。", "The main blocker is price confirmation.", "The MAIN blocker / is PRICE confirmation", "blocker", "卡点"],
+    ["team_priority", "Daily work", "确认优先级", "Team", "Which task first?", "Should we prioritize lead follow-up first, or content posting for today's property video?", "prioritize 是工作里问优先级最常见的词。", "Should we prioritize lead follow-up first?", "Should we PRIoritize / lead FOLLOW-up first", "prioritize", "优先处理"],
+    ["client_busy", "Client follow-up", "客户说现在忙", "Client", "I am busy now.", "No worries. When would be a better time for me to follow up with you?", "No worries 非常日常，不会有压力。", "When would be a better time to follow up?", "When would be / a BETter time / to FOLLOW up", "no worries", "没关系"],
+    ["client_budget_low", "Client follow-up", "客户预算偏低", "Client", "My budget is 400k AED.", "Thanks for sharing. Options may be limited at that budget, but I can still understand your preferred area and purpose first.", "预算低时不直接否定，先说 options may be limited。", "Options may be limited at that budget.", "OPtions / may be LIMited / at that BUdget", "limited", "有限"],
+    ["client_compare", "Client follow-up", "客户在比较项目", "Client", "I am comparing a few projects.", "That makes sense. What are your main priorities, price, location, payment plan, or handover timeline?", "That makes sense 很自然，先认同再问比较维度。", "What are your main priorities?", "What are your MAIN / priORities", "priorities", "优先考虑因素"],
+    ["client_not_ready", "Client follow-up", "客户暂时不准备买", "Client", "I am not ready yet.", "That's completely fine. Would you like me to keep you updated when there are suitable Dubai property options?", "keep you updated 是低压力保持联系。", "Would you like me to keep you updated?", "Would you LIKE me / to KEEP you updated", "keep updated", "持续同步"],
+    ["whatsapp_voice", "WhatsApp communication", "客户发语音后回复", "Client", "Voice message.", "Thanks for the voice note. Let me confirm: you are looking for a 1-bedroom for investment, around 900k AED, correct?", "Let me confirm 用来复述确认需求。", "Let me confirm your requirements.", "Let me conFIRM / your reQUIREments", "voice note", "语音消息"],
+    ["whatsapp_follow", "WhatsApp communication", "轻量跟进未回复", "Client", "No reply.", "Hi, just checking in. Are you still considering Dubai property, or should I follow up later?", "just checking in 是轻量跟进，不压迫。", "Just checking in.", "Just CHECKing in", "checking in", "跟进问候"],
+    ["whatsapp_docs", "WhatsApp communication", "发送资料前说明内容", "Client", "Send me details on WhatsApp.", "Sure. I will send the project location, starting price, payment plan, and handover timeline for your review.", "for your review 是发送资料时自然的结尾。", "I will send it for your review.", "I will SEND it / for your reVIEW", "for your review", "供你查看"],
+    ["objection_fee", "Client objection", "客户问是否收费", "Client", "Do I need to pay you?", "No, you do not need to pay us for understanding your requirements. If there is any future cost, we will explain it clearly first.", "先澄清不会为了了解需求收费，避免误解。", "We will explain it clearly first.", "We will exPLAIN it / CLEARly first", "cost", "费用"],
+    ["objection_trust", "Client objection", "客户不信任时降低防备", "Client", "How do I know this is real?", "I understand your concern. We can first discuss your requirements, and you can verify any project details before making decisions.", "I understand your concern 是处理不信任的自然开头。", "You can verify the project details first.", "You can VERify / the PROject details first", "verify", "核实"],
+  ];
+
+  return Object.fromEntries(
+    scenarios.map(([id, tag, title, sourceRole, source, model, breakdown, phrase, parts, vocabTerm, vocabMeaning]) => [
+      id,
+      {
+        tag,
+        title,
+        context: "来自迪拜房产运营日常工作沟通，适合碎片化学习和检测。",
+        sourceRole,
+        source,
+        model,
+        breakdown,
+        pronunciation: {
+          phrase,
+          hint: "先按短语读，不要逐词蹦；重点词稍微放慢。",
+          parts,
+          tip: "读完后可以点“读示范回复”，跟读整句语气。",
+        },
+        vocab: [
+          [vocabTerm, vocabMeaning],
+          ["follow up", "跟进"],
+          ["confirm", "确认"],
+          ["suitable", "合适的"],
+          ["available", "可用/可售/可租"],
+        ],
+        sentences: [
+          [phrase, "本场景最常用表达"],
+          ["Could you confirm the latest details?", "请对方确认最新信息"],
+          ["Let me understand your requirements first.", "先了解需求"],
+          ["I will follow up with you shortly.", "稍后跟进"],
+        ],
+        drills: [
+          [model, "完整示范回复"],
+          ["Could you share more details?", "请求更多信息"],
+          ["Let me check and get back to you.", "先核实再回复"],
+          ["What would be the best next step?", "确认下一步"],
+        ],
+        mistake: "不要硬翻中文，也不要过早承诺房源、价格、收益或结果。",
+        usage: phrase,
+        examTask: "AI 扮演真实工作沟通对象。你要用自然英文继续推进对话，并守住业务边界。",
+        checklist: [
+          ["自然", "表达像日常 WhatsApp/工作沟通"],
+          ["推进", "问清下一步或关键需求"],
+          ["边界", "不虚构房源，不承诺收益"],
+        ],
+        daily: `学会一句：${phrase}`,
+        examRounds: [source, "Can you explain a bit more?", "What should we do next?", "Can you send me the details?"],
+        feedback: "注意表达要自然、具体、可推进；不要用生硬直译或夸张销售话术。",
+      },
+    ]),
+  );
+}
+
+Object.assign(lessons, buildExpandedLessons());
+
+let lessonOrder = Object.keys(lessons);
 
 let currentLessonIndex = 0;
 let currentModule = lessonOrder[currentLessonIndex];
@@ -264,9 +359,15 @@ const ids = {
   loginButton: $("#loginButton"),
   loginError: $("#loginError"),
   logoutButton: $("#logoutButton"),
+  openTeacher: $("#openTeacher"),
+  closeTeacher: $("#closeTeacher"),
+  teacherBackdrop: $("#teacherBackdrop"),
+  adminBackdrop: $("#adminBackdrop"),
+  closeAdmin: $("#closeAdmin"),
   userName: $("#userName"),
   lessonPosition: $("#lessonPosition"),
   lessonCategory: $("#lessonCategory"),
+  libraryCount: $("#libraryCount"),
   moduleTag: $("#moduleTag"),
   moduleTitle: $("#moduleTitle"),
   moduleContext: $("#moduleContext"),
@@ -285,7 +386,6 @@ const ids = {
   pronunciationTip: $("#pronunciationTip"),
   learnView: $("#learnView"),
   examView: $("#examView"),
-  coachView: $("#coachView"),
   examTitle: $("#examTitle"),
   examTask: $("#examTask"),
   examChecklist: $("#examChecklist"),
@@ -297,7 +397,6 @@ const ids = {
   examCount: $("#examCount"),
   caseCount: $("#caseCount"),
   markLearned: $("#markLearned"),
-  examCard: $("#examCard"),
   roundLabel: $("#roundLabel"),
   examChat: $("#examChat"),
   replyBox: $("#replyBox"),
@@ -307,16 +406,12 @@ const ids = {
   coachInput: $("#coachInput"),
   generateCase: $("#generateCase"),
   coachResult: $("#coachResult"),
-  savedCaseCard: $("#savedCaseCard"),
-  savedCount: $("#savedCount"),
-  savedCases: $("#savedCases"),
   examHistory: $("#examHistory"),
   exportData: $("#exportData"),
   importData: $("#importData"),
   clearCases: $("#clearCases"),
   prevLesson: $("#prevLesson"),
   nextLesson: $("#nextLesson"),
-  adminView: $("#adminView"),
   adminNav: $("#adminNav"),
   createUserForm: $("#createUserForm"),
   newUserName: $("#newUserName"),
@@ -357,6 +452,7 @@ function authHeaders() {
 }
 
 function getCurrentLessonId() {
+  refreshLessonOrder();
   const safeIndex = ((currentLessonIndex % lessonOrder.length) + lessonOrder.length) % lessonOrder.length;
   currentLessonIndex = safeIndex;
   currentModule = lessonOrder[safeIndex];
@@ -365,6 +461,66 @@ function getCurrentLessonId() {
 
 function getCurrentLesson() {
   return lessons[getCurrentLessonId()];
+}
+
+function createPersonalLesson(item) {
+  const raw = item.raw || item.input || item.title || "个人学习案例";
+  const content = item.content || item.summary || "";
+  const id = item.id || `personal-${btoa(unescape(encodeURIComponent(raw))).replaceAll("=", "").slice(0, 18)}`;
+  return {
+    id,
+    tag: "Personal library",
+    title: item.title || `个人知识点：${raw.slice(0, 24)}`,
+    context: "来自 AI 老师解析，已经加入你的个人学习库。",
+    sourceRole: /[\u4e00-\u9fff]/.test(raw) ? "You" : "Work message",
+    source: raw,
+    model: item.recommended || content.slice(0, 220) || "Open the teacher result to review this case.",
+    breakdown: item.explanation || item.summary || "这是你在工作里遇到的问题，适合转成个人知识点反复学习。",
+    pronunciation: {
+      phrase: item.phrase || item.recommended || "Could you please confirm the latest details?",
+      hint: "个人案例先跟读推荐表达，再回到原始工作场景里使用。",
+      parts: item.parts || "Could you please / confirm / the latest details",
+      tip: "如果句子较长，先拆成 2-3 个短语读。",
+    },
+    vocab: item.vocab || [
+      ["confirm", "确认"],
+      ["latest details", "最新信息"],
+      ["follow up", "跟进"],
+    ],
+    sentences: item.sentences || [
+      [item.recommended || "Could you please confirm the latest details?", "个人案例推荐表达"],
+      ["Let me check and get back to you.", "先核实再回复"],
+    ],
+    drills: item.drills || [
+      [item.recommended || "Could you please confirm the latest details?", "直接可用"],
+      ["Could you share a bit more context?", "让对方补充背景"],
+    ],
+    mistake: item.mistake || "不要逐字硬翻，优先使用工作聊天里自然、清楚、礼貌的表达。",
+    usage: item.usage || item.recommended || "Could you please confirm the latest details?",
+    examTask: "AI 扮演与你这个个人案例相关的工作对象。你要用自然英文完成多轮沟通。",
+    checklist: [
+      ["自然", "不用生硬直译"],
+      ["清楚", "讲明需求、时间或下一步"],
+      ["业务", "贴合迪拜房产运营场景"],
+    ],
+    daily: `学会个人案例：${item.title || raw.slice(0, 20)}`,
+    examRounds: [raw, "Can you reply in a natural way?", "What should we do next?", "Can you make it clearer?"],
+    feedback: "个人案例检测重点：表达是否自然、是否清楚、是否适合真实工作沟通。",
+    personal: true,
+  };
+}
+
+function hydratePersonalLessons() {
+  const cases = readJson(STORAGE_KEYS.cases, []);
+  cases.forEach((item) => {
+    const lesson = item.lesson || createPersonalLesson(item);
+    lessons[lesson.id] = lesson;
+  });
+  refreshLessonOrder();
+}
+
+function refreshLessonOrder() {
+  lessonOrder = Object.keys(lessons);
 }
 
 function getAppState() {
@@ -380,6 +536,7 @@ function applyAppState(state) {
   if (Array.isArray(state.cases)) writeJson(STORAGE_KEYS.cases, state.cases);
   if (Array.isArray(state.examLogs)) writeJson(STORAGE_KEYS.examLogs, state.examLogs);
   if (state.progress) writeJson(STORAGE_KEYS.progress, state.progress);
+  hydratePersonalLessons();
 }
 
 async function loadRemoteState() {
@@ -413,6 +570,7 @@ async function renderAuth() {
   const isLoggedIn = Boolean(auth?.token);
   ids.loginView.hidden = isLoggedIn;
   ids.appShell.hidden = !isLoggedIn;
+  ids.openTeacher.hidden = !isLoggedIn;
   const isAdmin = auth?.user?.role === "admin";
   ids.userName.textContent = auth?.user?.name ? `Hi, ${auth.user.name}` : "今日建议";
   $$(".admin-only").forEach((item) => {
@@ -420,9 +578,9 @@ async function renderAuth() {
   });
   if (isLoggedIn) {
     await loadRemoteState();
+    hydratePersonalLessons();
     renderLesson();
     renderStage();
-    renderSavedCases();
     renderProgress();
     if (isAdmin) loadUsers();
   }
@@ -502,7 +660,7 @@ function renderExamSetup() {
   ids.submitRound.textContent = "提交本轮";
   ids.submitRound.disabled = examLessonIds.length === 0;
   if (!examLessonIds.length) {
-    ids.examTitle.textContent = "先完成学习，再进入应用考试";
+    ids.examTitle.textContent = "先完成学习，再进入检测";
     ids.examTask.textContent = "把学习里的知识点标记“学会了”之后，系统会用这些内容模拟多轮对话。";
     ids.examChecklist.innerHTML = "<li><strong>学习</strong><span>至少标记 1 个知识点学会</span></li>";
     ids.roundLabel.textContent = "未开始";
@@ -512,7 +670,7 @@ function renderExamSetup() {
   }
   const lessonId = examLessonIds.includes(currentModule) ? currentModule : examLessonIds[0];
   const lesson = lessons[lessonId];
-  ids.examTitle.textContent = "基于已学内容的多轮应用考试";
+  ids.examTitle.textContent = "基于已学内容的多轮检测";
   ids.examTask.textContent = `本轮会从 ${examLessonIds.length} 个已学知识点里模拟真实对话。先从：${lesson.title} 开始。`;
   renderList(ids.examChecklist, lesson.checklist);
   examMessages = [{ role: "assistant", text: lesson.examRounds[0] }];
@@ -535,30 +693,11 @@ function renderExamChat() {
 function renderStage() {
   const isLearn = currentStage === "learn";
   const isExam = currentStage === "exam";
-  const isCoach = currentStage === "coach";
-  const isAdmin = currentStage === "admin";
-  ids.moduleHead.hidden = isCoach || isAdmin;
+  ids.moduleHead.hidden = !isLearn;
   ids.learnView.hidden = !isLearn;
   ids.examView.hidden = !isExam;
-  ids.coachView.hidden = !isCoach;
-  ids.adminView.hidden = !isAdmin;
   ids.dailyCard.hidden = !isLearn;
-  ids.examCard.hidden = !isExam;
-  ids.savedCaseCard.hidden = isAdmin;
   if (isExam) renderExamSetup();
-  if (isAdmin) loadUsers();
-  renderProgress();
-}
-
-function renderSavedCases() {
-  const cases = readJson(STORAGE_KEYS.cases, []);
-  ids.savedCount.textContent = `${cases.length} 个`;
-  ids.savedCases.innerHTML = cases.length
-    ? cases
-        .slice(0, 4)
-        .map((item) => `<article><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.summary)}</span></article>`)
-        .join("")
-    : "<p>还没有保存案例。</p>";
   renderProgress();
 }
 
@@ -577,18 +716,20 @@ function renderExamHistory() {
 }
 
 function renderProgress() {
+  refreshLessonOrder();
   const progress = readJson(STORAGE_KEYS.progress, { learned: {}, streakDates: [] });
   const cases = readJson(STORAGE_KEYS.cases, []);
   const logs = readJson(STORAGE_KEYS.examLogs, []);
   const learnedModules = Object.keys(progress.learned || {}).length;
-  ids.learnedCount.textContent = `${learnedModules}/${lessonOrder.length}`;
+  ids.libraryCount.textContent = `${lessonOrder.length}`;
+  ids.learnedCount.textContent = `${learnedModules}`;
   ids.examCount.textContent = `${logs.length}`;
   ids.caseCount.textContent = `${cases.length}`;
   const learnedCurrent = Boolean(progress.learned?.[currentModule]);
   ids.markLearned.textContent = learnedCurrent ? "已加入考试池" : "标记学会了";
   ids.markLearned.disabled = learnedCurrent;
   ids.todayTitle.textContent = learnedCurrent ? "这个知识点已学会" : "当前知识点";
-  ids.todayGoal.textContent = logs.length ? "学 1 课 + 复盘 1 条" : "学 1 课 + 考 1 轮";
+  ids.todayGoal.textContent = logs.length ? "学 1 课 + 复盘 1 条" : "学 1 课 + 检测 1 轮";
   renderExamHistory();
 }
 
@@ -635,11 +776,12 @@ function importLearningData(file) {
       if (Array.isArray(payload.cases)) writeJson(STORAGE_KEYS.cases, payload.cases);
       if (Array.isArray(payload.examLogs)) writeJson(STORAGE_KEYS.examLogs, payload.examLogs);
       if (payload.progress) writeJson(STORAGE_KEYS.progress, payload.progress);
-      renderSavedCases();
+      hydratePersonalLessons();
+      renderLesson();
       renderProgress();
       syncRemoteState();
     } catch {
-      ids.savedCases.innerHTML = "<p>导入失败，文件格式不对。</p>";
+      ids.dailyCopy.textContent = "导入失败，文件格式不对。";
     }
   };
   reader.readAsText(file);
@@ -678,6 +820,8 @@ function makeCoachCase(raw) {
     return {
       title: "中文转英文：催 agent 发素材",
       summary: "把中文工作意图变成礼貌、清楚、有截止时间的英文。",
+      raw,
+      recommended: "Could you please send the property video before 5 PM Dubai time? We need it for tomorrow's lead follow-up.",
       html: `
         <h3>AI 生成的学习案例</h3>
         <p><strong>你的中文：</strong>${escapeHtml(raw)}</p>
@@ -691,6 +835,8 @@ function makeCoachCase(raw) {
   return {
     title: "英文解析：安排快速会议",
     summary: "理解 schedule a quick call 的工作语气，并学习自然回复。",
+    raw,
+    recommended: "Sure, tomorrow works for me. What time would be convenient for you in Dubai time?",
     html: `
       <h3>AI 生成的学习案例</h3>
       <p><strong>原文：</strong>${escapeHtml(raw)}</p>
@@ -724,16 +870,21 @@ async function callAiTeacher(payload) {
   ].filter(Boolean);
   const errors = [];
   for (const endpoint of endpoints) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json", ...authHeaders() },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
       if (!response.ok) throw new Error(`${endpoint} ${response.status}`);
       return response.json();
     } catch (error) {
       errors.push(error.message);
+    } finally {
+      clearTimeout(timer);
     }
   }
   throw new Error(`AI request failed: ${errors.join(" / ")}`);
@@ -748,9 +899,17 @@ async function makeCoachCaseWithAi(raw) {
       input: raw,
     });
     if (result.content) {
+      const recommended = result.content
+        .split("\n")
+        .map((line) => line.trim())
+        .find((line) => line && !/^\d+\./.test(line))
+        ?.replace(/^["“]|["”]$/g, "");
       return {
         title: localCase.title,
         summary: `${result.provider} / ${result.model}`,
+        raw,
+        content: result.content,
+        recommended,
         html: `<h3>AI 生成的学习案例</h3>${markdownToHtml(result.content)}`,
       };
     }
@@ -762,10 +921,17 @@ async function makeCoachCaseWithAi(raw) {
 
 function saveCase(item) {
   const cases = readJson(STORAGE_KEYS.cases, []);
-  const next = [{ ...item, createdAt: new Date().toISOString() }, ...cases].slice(0, 20);
+  const lesson = item.lesson || createPersonalLesson(item);
+  const exists = cases.some((caseItem) => (caseItem.lesson?.id || caseItem.id) === lesson.id);
+  if (exists) return false;
+  lessons[lesson.id] = lesson;
+  const next = [{ ...item, id: lesson.id, lesson, createdAt: new Date().toISOString() }, ...cases].slice(0, 200);
   writeJson(STORAGE_KEYS.cases, next);
+  refreshLessonOrder();
   syncRemoteState();
-  renderSavedCases();
+  renderLesson();
+  renderProgress();
+  return true;
 }
 
 function learnedLessonSummaries() {
@@ -930,25 +1096,45 @@ ids.loginForm.addEventListener("submit", (event) => {
   login(ids.loginEmail.value.trim(), ids.loginPassword.value);
 });
 ids.logoutButton.addEventListener("click", logout);
+ids.openTeacher.addEventListener("click", () => {
+  ids.teacherBackdrop.hidden = false;
+  ids.coachInput.focus();
+});
+ids.closeTeacher.addEventListener("click", () => {
+  ids.teacherBackdrop.hidden = true;
+});
+ids.teacherBackdrop.addEventListener("click", (event) => {
+  if (event.target === ids.teacherBackdrop) ids.teacherBackdrop.hidden = true;
+});
+ids.adminNav.addEventListener("click", async () => {
+  ids.adminBackdrop.hidden = false;
+  await loadUsers();
+});
+ids.closeAdmin.addEventListener("click", () => {
+  ids.adminBackdrop.hidden = true;
+});
+ids.adminBackdrop.addEventListener("click", (event) => {
+  if (event.target === ids.adminBackdrop) ids.adminBackdrop.hidden = true;
+});
 ids.generateCase.addEventListener("click", async () => {
   const raw = ids.coachInput.value.trim();
   if (!raw) {
     ids.coachResult.innerHTML = "<h3>先输入内容</h3><p>可以粘贴英文，也可以直接写中文问题。</p>";
     return;
   }
-  ids.generateCase.textContent = "生成中...";
+  ids.generateCase.textContent = "老师思考中...";
   ids.generateCase.disabled = true;
-  ids.coachResult.innerHTML = "<h3>AI 老师正在分析</h3><p>正在按模型规则选择低成本模型，失败时会自动使用本地兜底。</p>";
+  ids.coachResult.innerHTML = "<h3>AI 老师正在分析</h3><p>老师会自动判断是中译英、英译中、解释单词，还是生成工作表达。</p>";
   const item = await makeCoachCaseWithAi(raw);
-  ids.generateCase.textContent = "生成学习案例";
+  ids.generateCase.textContent = "问老师";
   ids.generateCase.disabled = false;
-  ids.coachResult.innerHTML = `${item.html}<button id="saveGeneratedCase" type="button">保存到我的案例</button>`;
-  $("#saveGeneratedCase").addEventListener("click", () => saveCase(item));
-});
-ids.clearCases.addEventListener("click", () => {
-  writeJson(STORAGE_KEYS.cases, []);
-  syncRemoteState();
-  renderSavedCases();
+  ids.coachResult.innerHTML = `${item.html}<button id="saveGeneratedCase" type="button">加入我的学习库</button>`;
+  const saveButton = $("#saveGeneratedCase");
+  saveButton.addEventListener("click", () => {
+    const saved = saveCase(item);
+    saveButton.textContent = saved ? "已加入学习库" : "已在学习库";
+    saveButton.disabled = true;
+  });
 });
 ids.createUserForm.addEventListener("submit", (event) => {
   event.preventDefault();
