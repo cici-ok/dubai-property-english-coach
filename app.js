@@ -335,6 +335,7 @@ function buildExpandedLessons() {
 
 Object.assign(lessons, buildExpandedLessons());
 Object.assign(lessons, window.BUSINESS_KNOWLEDGE_BASE || {});
+Object.assign(lessons, window.MUSEWEN_KNOWLEDGE_BASE || {});
 
 let lessonOrder = Object.keys(lessons);
 
