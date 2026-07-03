@@ -380,10 +380,6 @@ const ids = {
   mistake: $("#mistake"),
   usage: $("#usage"),
   drillList: $("#drillList"),
-  pronunciationPhrase: $("#pronunciationPhrase"),
-  pronunciationHint: $("#pronunciationHint"),
-  pronunciationParts: $("#pronunciationParts"),
-  pronunciationTip: $("#pronunciationTip"),
   learnView: $("#learnView"),
   examView: $("#examView"),
   examTitle: $("#examTitle"),
@@ -409,7 +405,6 @@ const ids = {
   examHistory: $("#examHistory"),
   exportData: $("#exportData"),
   importData: $("#importData"),
-  clearCases: $("#clearCases"),
   prevLesson: $("#prevLesson"),
   nextLesson: $("#nextLesson"),
   adminNav: $("#adminNav"),
@@ -618,6 +613,33 @@ function renderList(target, rows) {
   target.innerHTML = rows.map(([term, meaning]) => `<li><strong>${escapeHtml(term)}</strong><span>${escapeHtml(meaning)}</span></li>`).join("");
 }
 
+function renderSpeakableText(text) {
+  const value = String(text);
+  const parts = value.match(/[A-Za-z][A-Za-z'-]*|\d+(?:[.,]\d+)?|[^A-Za-z\d]+/g) || [value];
+  return parts
+    .map((part) => {
+      if (/^[A-Za-z][A-Za-z'-]*$/.test(part)) {
+        return `<button class="word-chip" type="button" data-speak-text="${escapeHtml(part)}">${escapeHtml(part)}</button>`;
+      }
+      return escapeHtml(part);
+    })
+    .join("");
+}
+
+function speakButton(text, label = "读句子") {
+  return `<button class="inline-speaker" type="button" data-speak-text="${escapeHtml(text)}" aria-label="${escapeHtml(label)}">🔊</button>`;
+}
+
+function renderSentenceLine(text) {
+  return `<span class="speakable-line">${renderSpeakableText(text)} ${speakButton(text)}</span>`;
+}
+
+function renderSpeakableList(target, rows) {
+  target.innerHTML = rows
+    .map(([term, meaning]) => `<li><strong>${renderSentenceLine(term)}</strong><span>${escapeHtml(meaning)}</span></li>`)
+    .join("");
+}
+
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -632,19 +654,15 @@ function renderLesson() {
   ids.moduleTitle.textContent = lesson.title;
   ids.moduleContext.textContent = lesson.context;
   ids.sourceRole.textContent = lesson.sourceRole;
-  ids.sourceLine.textContent = lesson.source;
-  ids.modelLine.textContent = lesson.model;
+  ids.sourceLine.innerHTML = renderSentenceLine(lesson.source);
+  ids.modelLine.innerHTML = renderSentenceLine(lesson.model);
   ids.breakdown.textContent = lesson.breakdown;
-  ids.pronunciationPhrase.textContent = lesson.pronunciation.phrase;
-  ids.pronunciationHint.textContent = lesson.pronunciation.hint;
-  ids.pronunciationParts.textContent = lesson.pronunciation.parts;
-  ids.pronunciationTip.textContent = lesson.pronunciation.tip;
   ids.mistake.textContent = lesson.mistake;
-  ids.usage.textContent = lesson.usage;
+  ids.usage.innerHTML = renderSentenceLine(lesson.usage);
   ids.dailyCopy.textContent = lesson.daily;
-  renderList(ids.vocabList, lesson.vocab);
-  renderList(ids.sentenceList, lesson.sentences);
-  renderList(ids.drillList, lesson.drills);
+  renderSpeakableList(ids.vocabList, lesson.vocab);
+  renderSpeakableList(ids.sentenceList, lesson.sentences);
+  renderSpeakableList(ids.drillList, lesson.drills);
   ids.markLearned.textContent = isLearned ? "已加入考试池" : "标记学会了";
   ids.markLearned.disabled = isLearned;
   renderProgress();
@@ -803,7 +821,7 @@ function setStage(stage) {
 
 function speakText(text) {
   if (!("speechSynthesis" in window)) {
-    ids.pronunciationTip.textContent = "当前浏览器不支持朗读，可以先看拆分读音练习。";
+    ids.dailyCopy.textContent = "当前浏览器不支持朗读。";
     return;
   }
   window.speechSynthesis.cancel();
@@ -1076,12 +1094,10 @@ $$(".quick-prompt").forEach((button) => {
     ids.coachInput.value = button.dataset.sample;
   });
 });
-$$(".speak-button").forEach((button) => {
-  button.addEventListener("click", () => {
-    const lesson = lessons[currentModule];
-    const text = button.dataset.speak === "model" ? lesson.model : lesson.pronunciation.phrase;
-    speakText(text);
-  });
+document.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-speak-text]");
+  if (!target) return;
+  speakText(target.dataset.speakText || target.textContent);
 });
 
 ids.submitRound.addEventListener("click", submitExamRound);

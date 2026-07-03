@@ -70,41 +70,24 @@
           </article>
 
           <section id="learnView" class="view">
-            <div class="dialogue-card">
-              <div class="message incoming">
-                <span id="sourceRole">Customer</span>
-                <p id="sourceLine">Interested. Please send details.</p>
+            <section class="case-card">
+              <div class="section-title"><span>01</span><h3>案例对话</h3></div>
+              <div class="conversation-flow">
+                <div class="conversation-row incoming">
+                  <span id="sourceRole">Customer</span>
+                  <p id="sourceLine">Interested. Please send details.</p>
+                </div>
+                <div class="conversation-row outgoing">
+                  <span>You</span>
+                  <p id="modelLine"></p>
+                </div>
               </div>
-              <div class="message outgoing">
-                <span>You</span>
-                <p id="modelLine"></p>
-              </div>
-            </div>
+            </section>
 
             <div class="learn-stack">
               <section class="learn-section">
-                <div class="section-title"><span>01</span><h3>核心表达</h3></div>
+                <div class="section-title"><span>02</span><h3>为什么这么说</h3></div>
                 <p id="breakdown"></p>
-              </section>
-
-              <section class="learn-section pronunciation-card">
-                <div class="section-title"><span>02</span><h3>读音查询</h3></div>
-                <div class="pronunciation-grid">
-                  <div>
-                    <p class="pronunciation-label">重点句</p>
-                    <p class="pronunciation-text" id="pronunciationPhrase"></p>
-                    <p class="pronunciation-note" id="pronunciationHint"></p>
-                  </div>
-                  <div>
-                    <p class="pronunciation-label">拆开读</p>
-                    <p class="pronunciation-text" id="pronunciationParts"></p>
-                    <p class="pronunciation-note" id="pronunciationTip"></p>
-                  </div>
-                </div>
-                <div class="pronunciation-actions">
-                  <button class="speak-button" type="button" data-speak="phrase">读重点句</button>
-                  <button class="speak-button" type="button" data-speak="model">读示范回复</button>
-                </div>
               </section>
 
               <div class="learn-columns">

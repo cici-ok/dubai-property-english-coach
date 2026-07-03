@@ -205,11 +205,9 @@ h3 {
 #resetExam,
 #generateCase,
 .quick-prompt,
-.speak-button,
 #markLearned,
 #exportData,
 .import-label,
-#clearCases,
 #saveGeneratedCase,
 #createUserButton,
 #prevLesson,
@@ -296,37 +294,45 @@ h3 {
   margin-top: 18px;
 }
 
-.dialogue-card {
-  display: grid;
-  gap: 12px;
+.case-card {
   margin-bottom: 16px;
-}
-
-.message {
-  padding: 16px;
-  border: 1px solid var(--line);
+  padding: 18px;
+  border: 1px solid #c6d7d4;
   background: #fbfbf8;
 }
 
-.message span {
-  display: block;
-  margin-bottom: 8px;
+.conversation-flow {
+  display: grid;
+  gap: 10px;
+}
+
+.conversation-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--white);
+}
+
+.conversation-row span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 
-.message p {
+.conversation-row p {
   margin-bottom: 0;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-.incoming {
-  border-left: 5px solid var(--amber);
+.conversation-row.incoming {
+  border-left: 4px solid var(--amber);
 }
 
-.outgoing {
-  border-left: 5px solid var(--green);
+.conversation-row.outgoing {
+  border-left: 4px solid var(--green);
 }
 
 .learn-stack,
@@ -376,49 +382,38 @@ h3 {
   background: #fbfbf8;
 }
 
-.pronunciation-card {
-  background: #f7fbff;
-  border-color: #c4d4e7;
+.word-chip {
+  min-height: auto;
+  margin: 0;
+  padding: 0 1px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  line-height: inherit;
+  text-align: inherit;
 }
 
-.pronunciation-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.pronunciation-label {
-  margin-bottom: 6px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.pronunciation-text {
-  margin-bottom: 8px;
+.word-chip:hover {
   color: var(--blue);
-  font-weight: 700;
-  line-height: 1.55;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.pronunciation-note {
-  margin-bottom: 0;
-  color: #3f4f46;
-  line-height: 1.65;
+.inline-speaker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  border: 1px solid var(--line);
+  background: var(--blue-soft);
+  color: var(--blue);
+  vertical-align: middle;
 }
 
-.pronunciation-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.speak-button {
-  background: var(--blue);
-  color: var(--white);
-  border-color: var(--blue);
-  font-weight: 700;
+.speakable-line {
+  line-height: 1.7;
 }
 
 .section-title {
@@ -792,11 +787,6 @@ textarea {
   gap: 10px;
 }
 
-#clearCases {
-  width: 100%;
-  margin-top: 12px;
-}
-
 .data-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -840,8 +830,6 @@ textarea {
   .exam-layout,
   .coach-actions,
   .lesson-actions,
-  .pronunciation-grid,
-  .pronunciation-actions,
   .progress-grid,
   .data-actions {
     grid-template-columns: 1fr;
