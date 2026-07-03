@@ -346,6 +346,8 @@ let currentRound = 0;
 let examAnswers = [];
 let examMessages = [];
 let examLessonIds = [];
+let teacherMessages = [];
+let latestTeacherCase = null;
 let remoteSyncTimer = null;
 
 const $ = (selector) => document.querySelector(selector);
@@ -403,6 +405,8 @@ const ids = {
   examFeedback: $("#examFeedback"),
   coachInput: $("#coachInput"),
   generateCase: $("#generateCase"),
+  summarizeTeacherCase: $("#summarizeTeacherCase"),
+  teacherChat: $("#teacherChat"),
   coachResult: $("#coachResult"),
   examHistory: $("#examHistory"),
   exportData: $("#exportData"),
@@ -939,6 +943,105 @@ async function makeCoachCaseWithAi(raw) {
   return localCase;
 }
 
+function renderTeacherChat() {
+  if (!teacherMessages.length) {
+    ids.teacherChat.innerHTML = "<p class=\"teacher-empty\">把中文、英文、单词或工作问题发给老师。可以继续追问，也可以质疑老师的表达。</p>";
+    ids.summarizeTeacherCase.disabled = true;
+    return;
+  }
+  ids.teacherChat.innerHTML = teacherMessages
+    .map((message) => {
+      const label = message.role === "user" ? "你" : "老师";
+      return `<article class="teacher-message ${message.role}"><span>${label}</span>${markdownToHtml(message.content)}</article>`;
+    })
+    .join("");
+  ids.teacherChat.scrollTop = ids.teacherChat.scrollHeight;
+  ids.summarizeTeacherCase.disabled = !teacherMessages.some((message) => message.role === "assistant");
+}
+
+function teacherFallbackReply(raw) {
+  const isChallenge = /(太硬|不自然|奇怪|不对|更口语|地道|质疑|wrong|natural|too formal|too stiff)/i.test(raw);
+  if (isChallenge) {
+    return [
+      "你这个质疑成立。上一版能用，但语气偏正式，更像邮件，不够像 WhatsApp。",
+      "",
+      "更自然的说法：",
+      "Hi, could you send the property video by 5 PM Dubai time if possible? We need it for tomorrow's lead follow-up.",
+      "",
+      "为什么更好：加 if possible 会柔和一点；by 5 PM 比 before 5 PM 更像日常工作截止时间；We need it for... 说明用途，不像单纯催人。",
+      "",
+      "可继续练的一句：Could you send it by 5 PM Dubai time if possible?",
+    ].join("\n");
+  }
+  const item = makeCoachCase(raw);
+  return [
+    "我先按工作英语来处理：",
+    item.recommended || item.content || "Could you please confirm the latest details?",
+    "",
+    "为什么这么说：这句话适合 WhatsApp/飞书里的日常工作沟通，清楚、礼貌，也不会过度承诺。",
+    "",
+    "你可以继续追问：比如问我这个表达自然吗、有没有更口语的说法、或者适合发给 agent 还是客户。",
+  ].join("\n");
+}
+
+async function askTeacher(raw) {
+  try {
+    const result = await callAiTeacher({
+      task: "coach_chat",
+      quality: "high",
+      input: raw,
+      messages: teacherMessages,
+    });
+    return result.content || teacherFallbackReply(raw);
+  } catch (error) {
+    console.warn(error);
+    return teacherFallbackReply(raw);
+  }
+}
+
+function buildTeacherConversationText() {
+  return teacherMessages
+    .map((message) => `${message.role === "user" ? "User" : "Teacher"}: ${message.content}`)
+    .join("\n\n");
+}
+
+async function summarizeTeacherConversation() {
+  const conversation = buildTeacherConversationText();
+  const firstUser = teacherMessages.find((message) => message.role === "user")?.content || "个人学习案例";
+  const localCase = makeCoachCase(firstUser);
+  try {
+    const result = await callAiTeacher({
+      task: "coach_summarize",
+      quality: "high",
+      messages: teacherMessages,
+    });
+    if (result.content) {
+      const recommended = result.content
+        .split("\n")
+        .map((line) => line.trim())
+        .find((line) => line && !/^\d+\./.test(line))
+        ?.replace(/^["“]|["”]$/g, "");
+      return {
+        title: `个人知识点：${firstUser.slice(0, 24)}`,
+        summary: `${result.provider} / ${result.model}`,
+        raw: conversation,
+        content: result.content,
+        recommended,
+        explanation: "由 AI 老师连续对话整理成学习案例。",
+        html: `<h3>已整理成学习案例</h3>${markdownToHtml(result.content)}`,
+      };
+    }
+  } catch (error) {
+    console.warn(error);
+  }
+  return {
+    ...localCase,
+    raw: conversation || firstUser,
+    title: `个人知识点：${firstUser.slice(0, 24)}`,
+    html: `<h3>已整理成学习案例</h3>${markdownToHtml(localCase.content || localCase.recommended || firstUser)}`,
+  };
+}
+
 function saveCase(item) {
   const cases = readJson(STORAGE_KEYS.cases, []);
   const lesson = item.lesson || createPersonalLesson(item);
@@ -1137,19 +1240,39 @@ ids.adminBackdrop.addEventListener("click", (event) => {
 ids.generateCase.addEventListener("click", async () => {
   const raw = ids.coachInput.value.trim();
   if (!raw) {
-    ids.coachResult.innerHTML = "<h3>先输入内容</h3><p>可以粘贴英文，也可以直接写中文问题。</p>";
+    ids.coachResult.innerHTML = "<h3>先输入内容</h3><p>可以粘贴英文，也可以直接写中文问题，或继续追问老师。</p>";
     return;
   }
-  ids.generateCase.textContent = "老师思考中...";
+  teacherMessages.push({ role: "user", content: raw });
+  ids.coachInput.value = "";
+  renderTeacherChat();
+  ids.generateCase.textContent = "老师回复中...";
   ids.generateCase.disabled = true;
-  ids.coachResult.innerHTML = "<h3>AI 老师正在分析</h3><p>老师会自动判断是中译英、英译中、解释单词，还是生成工作表达。</p>";
-  const item = await makeCoachCaseWithAi(raw);
-  ids.generateCase.textContent = "问老师";
+  ids.coachResult.innerHTML = "<h3>老师正在回复</h3><p>这次会结合前面的对话来回答。如果你质疑表达是否自然，老师会先自查再修正。</p>";
+  const reply = await askTeacher(raw);
+  teacherMessages.push({ role: "assistant", content: reply });
+  latestTeacherCase = null;
+  ids.generateCase.textContent = "发送";
   ids.generateCase.disabled = false;
+  ids.coachResult.innerHTML = "<h3>可以继续追问</h3><p>聊完后点击“整理成学习案例”，再加入你的学习库。</p>";
+  renderTeacherChat();
+});
+ids.summarizeTeacherCase.addEventListener("click", async () => {
+  if (!teacherMessages.some((message) => message.role === "assistant")) {
+    ids.coachResult.innerHTML = "<h3>还没有可整理的对话</h3><p>先和老师完成一轮问答，再整理成学习案例。</p>";
+    return;
+  }
+  ids.summarizeTeacherCase.textContent = "整理中...";
+  ids.summarizeTeacherCase.disabled = true;
+  ids.coachResult.innerHTML = "<h3>正在整理学习案例</h3><p>老师会把这段对话整理成原文、推荐表达、解释、词汇和可练习对话。</p>";
+  const item = await summarizeTeacherConversation();
+  latestTeacherCase = item;
+  ids.summarizeTeacherCase.textContent = "整理成学习案例";
+  renderTeacherChat();
   ids.coachResult.innerHTML = `${item.html}<button id="saveGeneratedCase" type="button">加入我的学习库</button>`;
   const saveButton = $("#saveGeneratedCase");
   saveButton.addEventListener("click", () => {
-    const saved = saveCase(item);
+    const saved = saveCase(latestTeacherCase || item);
     saveButton.textContent = saved ? "已加入学习库" : "已在学习库";
     saveButton.disabled = true;
   });
@@ -1159,4 +1282,5 @@ ids.createUserForm.addEventListener("submit", (event) => {
   createUser(ids.newUserName.value.trim().toLowerCase(), ids.newUserPassword.value);
 });
 
+renderTeacherChat();
 renderAuth();

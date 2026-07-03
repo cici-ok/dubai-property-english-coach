@@ -179,13 +179,17 @@
           </div>
           <button id="closeTeacher" type="button">关闭</button>
         </div>
-        <label for="coachInput">把中文、英文、单词或问题直接发给老师</label>
+        <section id="teacherChat" class="teacher-chat">
+          <p class="teacher-empty">把中文、英文、单词或工作问题发给老师。可以继续追问，也可以质疑老师的表达。</p>
+        </section>
+        <label for="coachInput">继续问老师</label>
         <textarea id="coachInput" rows="8" placeholder="例如：帮我用英文催 agent 今天下午5点前发房源视频。
 例如：Can we schedule a quick call tomorrow to discuss the new leads?"></textarea>
-        <button id="generateCase" type="button">问老师</button>
+        <button id="generateCase" type="button">发送</button>
+        <button id="summarizeTeacherCase" class="secondary-action" type="button">整理成学习案例</button>
         <section id="coachResult" class="case-result">
-          <h3>老师会判断怎么处理</h3>
-          <p>中文会转自然英文，英文会解释意思和用法，最后可以加入你的学习库。</p>
+          <h3>对话后生成案例</h3>
+          <p>和老师聊完后，点击“整理成学习案例”，系统会把这段对话沉淀到你的学习库。</p>
         </section>
       </aside>
     </section>

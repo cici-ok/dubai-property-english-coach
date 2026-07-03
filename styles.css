@@ -551,6 +551,7 @@ textarea {
 
 #submitRound,
 #generateCase,
+#summarizeTeacherCase,
 #saveGeneratedCase,
 #markLearned,
 #createUserButton {
@@ -690,11 +691,17 @@ textarea {
 }
 
 .teacher-drawer textarea {
-  min-height: 190px;
+  min-height: 118px;
 }
 
 .teacher-drawer #generateCase {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+}
+
+.secondary-action {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  color: var(--blue);
 }
 
 .teacher-drawer #saveGeneratedCase:disabled {
@@ -742,6 +749,62 @@ textarea {
 
 .coach-panel textarea {
   min-height: 180px;
+}
+
+.teacher-chat {
+  display: grid;
+  gap: 10px;
+  max-height: 42vh;
+  min-height: 180px;
+  margin-bottom: 14px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #fbfbf8;
+}
+
+.teacher-empty {
+  margin: auto;
+  max-width: 340px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.teacher-message {
+  max-width: 88%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  line-height: 1.65;
+}
+
+.teacher-message.user {
+  justify-self: end;
+  background: var(--green-soft);
+  border-color: #b7d7c4;
+}
+
+.teacher-message.assistant {
+  justify-self: start;
+  background: var(--blue-soft);
+  border-color: #c4d4e7;
+}
+
+.teacher-message span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.teacher-message p {
+  margin: 0 0 8px;
+}
+
+.teacher-message p:last-child {
+  margin-bottom: 0;
 }
 
 .case-result {
