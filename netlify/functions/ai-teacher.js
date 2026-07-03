@@ -3,7 +3,7 @@ const MODEL_POLICY = {
     provider: "opencode",
     baseUrl: process.env.OPENCODE_BASE_URL || "https://opencode.ai/zen/v1",
     apiKey: process.env.OPENCODE_API_KEY,
-    model: process.env.OPENCODE_FREE_MODEL || "qwen3.6-plus-free",
+    model: process.env.OPENCODE_FREE_MODEL || "deepseek-v4-flash-free",
   },
   paid: {
     provider: "gptsapi",

@@ -807,6 +807,13 @@ textarea {
   margin-bottom: 0;
 }
 
+.teacher-message small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .case-result {
   background: var(--blue-soft);
   border-color: #c4d4e7;

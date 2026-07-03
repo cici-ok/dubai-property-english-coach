@@ -952,7 +952,8 @@ function renderTeacherChat() {
   ids.teacherChat.innerHTML = teacherMessages
     .map((message) => {
       const label = message.role === "user" ? "你" : "老师";
-      return `<article class="teacher-message ${message.role}"><span>${label}</span>${markdownToHtml(message.content)}</article>`;
+      const meta = message.meta ? `<small>${escapeHtml(message.meta)}</small>` : "";
+      return `<article class="teacher-message ${message.role}"><span>${label}</span>${markdownToHtml(message.content)}${meta}</article>`;
     })
     .join("");
   ids.teacherChat.scrollTop = ids.teacherChat.scrollHeight;
@@ -992,10 +993,29 @@ async function askTeacher(raw) {
       input: raw,
       messages: teacherMessages,
     });
-    return result.content || teacherFallbackReply(raw);
+    if (result.fallback) {
+      const reason = (result.errors || []).join(" / ") || "免费模型暂时不可用";
+      return {
+        content: [
+          "免费 AI 当前不可用，我先用本地规则给你一个临时答案。",
+          "",
+          teacherFallbackReply(raw),
+          "",
+          `原因：${reason}`,
+        ].join("\n"),
+        meta: `${result.provider || "local"} / ${result.model || "fallback"}`,
+      };
+    }
+    return {
+      content: result.content || teacherFallbackReply(raw),
+      meta: `${result.provider || "unknown"} / ${result.model || "unknown"}`,
+    };
   } catch (error) {
     console.warn(error);
-    return teacherFallbackReply(raw);
+    return {
+      content: ["免费 AI 当前请求失败，我先用本地规则给你一个临时答案。", "", teacherFallbackReply(raw)].join("\n"),
+      meta: "local / request-failed",
+    };
   }
 }
 
@@ -1015,7 +1035,7 @@ async function summarizeTeacherConversation() {
       quality: "standard",
       messages: teacherMessages,
     });
-    if (result.content) {
+    if (result.content && !result.fallback) {
       const recommended = result.content
         .split("\n")
         .map((line) => line.trim())
@@ -1250,7 +1270,7 @@ ids.generateCase.addEventListener("click", async () => {
   ids.generateCase.disabled = true;
   ids.coachResult.innerHTML = "<h3>老师正在回复</h3><p>这次会结合前面的对话来回答。如果你质疑表达是否自然，老师会先自查再修正。</p>";
   const reply = await askTeacher(raw);
-  teacherMessages.push({ role: "assistant", content: reply });
+  teacherMessages.push({ role: "assistant", content: reply.content, meta: reply.meta });
   latestTeacherCase = null;
   ids.generateCase.textContent = "发送";
   ids.generateCase.disabled = false;

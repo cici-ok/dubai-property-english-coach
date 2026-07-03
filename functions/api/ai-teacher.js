@@ -2,7 +2,7 @@ import { cors, json, requireUser } from "../_shared/auth.js";
 
 const DEFAULTS = {
   opencodeBaseUrl: "https://opencode.ai/zen/v1",
-  opencodeModel: "qwen3.6-plus-free",
+  opencodeModel: "deepseek-v4-flash-free",
   gptsapiBaseUrl: "https://api.gptsapi.net/v1",
   gptsapiModel: "gpt-4.1-mini",
 };
