@@ -632,17 +632,17 @@ function renderSpeakableText(text) {
     .join("");
 }
 
-function speakButton(text, label = "读句子") {
-  return `<button class="inline-speaker" type="button" data-speak-text="${escapeHtml(text)}" aria-label="${escapeHtml(label)}">🔊</button>`;
+function speakButton(text, label = "听读") {
+  return `<button class="inline-speaker" type="button" data-speak-text="${escapeHtml(text)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">听</button>`;
 }
 
-function renderSentenceLine(text) {
-  return `<span class="speakable-line">${renderSpeakableText(text)} ${speakButton(text)}</span>`;
+function renderSentenceLine(text, withSpeaker = true) {
+  return `<span class="speakable-line">${renderSpeakableText(text)}${withSpeaker ? speakButton(text) : ""}</span>`;
 }
 
-function renderSpeakableList(target, rows) {
+function renderSpeakableList(target, rows, withSpeaker = true) {
   target.innerHTML = rows
-    .map(([term, meaning]) => `<li><strong>${renderSentenceLine(term)}</strong><span>${escapeHtml(meaning)}</span></li>`)
+    .map(([term, meaning]) => `<li><strong>${renderSentenceLine(term, withSpeaker)}</strong><span>${escapeHtml(meaning)}</span></li>`)
     .join("");
 }
 
@@ -666,7 +666,7 @@ function renderLesson() {
   ids.mistake.textContent = lesson.mistake;
   ids.usage.innerHTML = renderSentenceLine(lesson.usage);
   ids.dailyCopy.textContent = lesson.daily;
-  renderSpeakableList(ids.vocabList, lesson.vocab);
+  renderSpeakableList(ids.vocabList, lesson.vocab, false);
   renderSpeakableList(ids.sentenceList, lesson.sentences);
   renderSpeakableList(ids.drillList, lesson.drills);
   ids.markLearned.textContent = isLearned ? "已加入考试池" : "标记学会了";
