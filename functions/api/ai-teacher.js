@@ -2,19 +2,12 @@ import { cors, json, requireUser } from "../_shared/auth.js";
 
 const DEFAULTS = {
   opencodeBaseUrl: "https://opencode.ai/zen/v1",
-  opencodeModel: "deepseek-v4-flash-free",
+  opencodeModel: "qwen3.6-plus-free",
   gptsapiBaseUrl: "https://api.gptsapi.net/v1",
   gptsapiModel: "gpt-4.1-mini",
 };
 
 function routes(env, task, quality) {
-  const freeFirstTasks = new Set([
-    "coach_case",
-    "coach_chat",
-    "coach_summarize",
-    "exam_next",
-    "exam_feedback",
-  ]);
   const free = {
     provider: "opencode",
     baseUrl: env.OPENCODE_BASE_URL || DEFAULTS.opencodeBaseUrl,
@@ -27,9 +20,10 @@ function routes(env, task, quality) {
     apiKey: env.GPTSAPI_API_KEY || env.GPTAPI_API_KEY,
     model: env.GPTAPI_QUALITY_MODEL || DEFAULTS.gptsapiModel,
   };
-  if (freeFirstTasks.has(task)) return [free, paid];
-  if (quality === "high" || quality === "paid") return [paid, free];
-  return [free, paid];
+  const paidFallbackEnabled = env.ALLOW_PAID_FALLBACK === "true";
+  const paidRequestEnabled = env.ALLOW_PAID_REQUESTS === "true";
+  if (quality === "paid" && paidRequestEnabled) return [paid];
+  return paidFallbackEnabled ? [free, paid] : [free];
 }
 
 function systemPrompt() {

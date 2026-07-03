@@ -3,7 +3,7 @@ const MODEL_POLICY = {
     provider: "opencode",
     baseUrl: process.env.OPENCODE_BASE_URL || "https://opencode.ai/zen/v1",
     apiKey: process.env.OPENCODE_API_KEY,
-    model: process.env.OPENCODE_FREE_MODEL || "deepseek-v4-flash-free",
+    model: process.env.OPENCODE_FREE_MODEL || "qwen3.6-plus-free",
   },
   paid: {
     provider: "gptsapi",
@@ -25,16 +25,10 @@ function json(statusCode, body) {
 }
 
 function pickRoute(task, quality) {
-  const freeFirstTasks = new Set([
-    "coach_case",
-    "coach_chat",
-    "coach_summarize",
-    "exam_next",
-    "exam_feedback",
-  ]);
-  if (freeFirstTasks.has(task)) return [MODEL_POLICY.free, MODEL_POLICY.paid];
-  if (quality === "high" || quality === "paid") return [MODEL_POLICY.paid, MODEL_POLICY.free];
-  return [MODEL_POLICY.free, MODEL_POLICY.paid];
+  const paidFallbackEnabled = process.env.ALLOW_PAID_FALLBACK === "true";
+  const paidRequestEnabled = process.env.ALLOW_PAID_REQUESTS === "true";
+  if (quality === "paid" && paidRequestEnabled) return [MODEL_POLICY.paid];
+  return paidFallbackEnabled ? [MODEL_POLICY.free, MODEL_POLICY.paid] : [MODEL_POLICY.free];
 }
 
 function systemPrompt() {
