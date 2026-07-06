@@ -55,11 +55,14 @@
           </div>
           <button class="nav-item active" data-stage-jump="learn">去学习</button>
           <button class="nav-item" data-stage-jump="exam">去检测</button>
-          <div class="data-actions">
-            <button id="exportData" type="button">导出备份</button>
-            <label class="import-label" for="importData">导入备份</label>
-            <input id="importData" type="file" accept="application/json" hidden />
-          </div>
+          <details class="data-actions">
+            <summary>数据备份</summary>
+            <div class="data-action-row">
+              <button id="exportData" type="button">导出备份</button>
+              <label class="import-label" for="importData">导入备份</label>
+              <input id="importData" type="file" accept="application/json" hidden />
+            </div>
+          </details>
         </aside>
 
         <section class="workspace" aria-live="polite">
