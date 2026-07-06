@@ -1437,3 +1437,223 @@ li span {
     grid-template-columns: 1fr;
   }
 }
+
+/* Learning page restructure */
+.view {
+  margin-top: 16px;
+}
+
+.case-card {
+  margin-bottom: 12px;
+}
+
+.case-card,
+.learn-section {
+  border-color: rgba(226, 222, 211, 0.75);
+}
+
+.section-title span {
+  min-width: auto;
+  height: 22px;
+  padding: 0 9px;
+  background: #edf3f8;
+}
+
+.conversation-flow {
+  gap: 12px;
+}
+
+.conversation-row {
+  grid-template-columns: 86px minmax(0, 1fr);
+  align-items: start;
+}
+
+.conversation-row span {
+  width: auto;
+  height: auto;
+  justify-content: flex-start;
+  padding-top: 12px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.conversation-row p {
+  min-height: auto;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.conversation-row.incoming p {
+  background: #f4efe7;
+}
+
+.conversation-row.outgoing p {
+  background: #e8f3ed;
+}
+
+.conversation-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.conversation-actions button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(36, 79, 122, 0.14);
+  border-radius: 999px;
+  background: #edf3f8;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.explanation-card {
+  display: grid;
+  gap: 12px;
+}
+
+.quick-use {
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f8faf7;
+  border: 1px solid rgba(226, 222, 211, 0.75);
+}
+
+.quick-use strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--green);
+  font-size: 13px;
+}
+
+.quick-use p {
+  margin: 0;
+}
+
+.learning-kit {
+  align-items: stretch;
+}
+
+.learning-kit .learn-section,
+.practice-card {
+  box-shadow: none;
+}
+
+#vocabList li,
+#sentenceList li,
+#drillList li {
+  grid-template-columns: minmax(160px, 0.8fr) 1fr;
+  align-items: start;
+}
+
+#sentenceList li strong,
+#drillList li strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.mistake-note {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff8eb;
+  color: #68451e;
+}
+
+.word-chip {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font-weight: 800;
+  line-height: inherit;
+}
+
+.word-chip:hover:not(:disabled) {
+  transform: none;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.inline-speaker {
+  transform: none !important;
+}
+
+.speakable-line {
+  display: inline;
+}
+
+@media (max-width: 760px) {
+  .conversation-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .conversation-row span {
+    padding-top: 0;
+  }
+
+  #vocabList li,
+  #sentenceList li,
+  #drillList li {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Final learning layout guardrails */
+#learnView .case-card,
+#learnView .learn-section {
+  box-shadow: none;
+}
+
+#learnView .case-card {
+  border: 1px solid rgba(226, 222, 211, 0.85);
+}
+
+#learnView .learn-stack {
+  gap: 12px;
+}
+
+#learnView .learn-section {
+  border-color: rgba(226, 222, 211, 0.7);
+}
+
+#sourceLine .word-chip,
+#modelLine .word-chip,
+#sentenceList .word-chip,
+#drillList .word-chip,
+#usage .word-chip {
+  display: inline;
+  pointer-events: none;
+  color: inherit;
+  font-weight: inherit;
+}
+
+#sourceLine .speakable-line,
+#modelLine .speakable-line {
+  display: block;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+#sourceLine,
+#modelLine {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 1120px) {
+  .rightbar {
+    display: none;
+  }
+}

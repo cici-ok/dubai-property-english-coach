@@ -397,6 +397,7 @@ const ids = {
   examCount: $("#examCount"),
   caseCount: $("#caseCount"),
   markLearned: $("#markLearned"),
+  listenReply: $("#listenReply"),
   roundLabel: $("#roundLabel"),
   examChat: $("#examChat"),
   replyBox: $("#replyBox"),
@@ -619,30 +620,22 @@ function renderList(target, rows) {
   target.innerHTML = rows.map(([term, meaning]) => `<li><strong>${escapeHtml(term)}</strong><span>${escapeHtml(meaning)}</span></li>`).join("");
 }
 
-function renderSpeakableText(text) {
-  const value = String(text);
-  const parts = value.match(/[A-Za-z][A-Za-z'-]*|\d+(?:[.,]\d+)?|[^A-Za-z\d]+/g) || [value];
-  return parts
-    .map((part) => {
-      if (/^[A-Za-z][A-Za-z'-]*$/.test(part)) {
-        return `<button class="word-chip" type="button" data-speak-text="${escapeHtml(part)}">${escapeHtml(part)}</button>`;
-      }
-      return escapeHtml(part);
-    })
-    .join("");
-}
-
 function speakButton(text, label = "听读") {
   return `<button class="inline-speaker" type="button" data-speak-text="${escapeHtml(text)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">听</button>`;
 }
 
 function renderSentenceLine(text, withSpeaker = true) {
-  return `<span class="speakable-line">${renderSpeakableText(text)}${withSpeaker ? speakButton(text) : ""}</span>`;
+  return `<span class="speakable-line">${escapeHtml(text)}${withSpeaker ? speakButton(text) : ""}</span>`;
 }
 
-function renderSpeakableList(target, rows, withSpeaker = true) {
+function renderSpeakableList(target, rows, withSpeaker = true, termMode = "sentence") {
   target.innerHTML = rows
-    .map(([term, meaning]) => `<li><strong>${renderSentenceLine(term, withSpeaker)}</strong><span>${escapeHtml(meaning)}</span></li>`)
+    .map(([term, meaning]) => {
+      const termHtml = termMode === "term"
+        ? `<button class="word-chip" type="button" data-speak-text="${escapeHtml(term)}">${escapeHtml(term)}</button>`
+        : renderSentenceLine(term, withSpeaker);
+      return `<li><strong>${termHtml}</strong><span>${escapeHtml(meaning)}</span></li>`;
+    })
     .join("");
 }
 
@@ -660,13 +653,14 @@ function renderLesson() {
   ids.moduleTitle.textContent = lesson.title;
   ids.moduleContext.textContent = lesson.context;
   ids.sourceRole.textContent = lesson.sourceRole;
-  ids.sourceLine.innerHTML = renderSentenceLine(lesson.source);
-  ids.modelLine.innerHTML = renderSentenceLine(lesson.model);
+  ids.sourceLine.innerHTML = renderSentenceLine(lesson.source, false);
+  ids.modelLine.innerHTML = renderSentenceLine(lesson.model, false);
+  ids.listenReply.dataset.speakText = lesson.model;
   ids.breakdown.textContent = lesson.breakdown;
   ids.mistake.textContent = lesson.mistake;
   ids.usage.innerHTML = renderSentenceLine(lesson.usage);
   ids.dailyCopy.textContent = lesson.daily;
-  renderSpeakableList(ids.vocabList, lesson.vocab, false);
+  renderSpeakableList(ids.vocabList, lesson.vocab, false, "term");
   renderSpeakableList(ids.sentenceList, lesson.sentences);
   renderSpeakableList(ids.drillList, lesson.drills);
   ids.markLearned.textContent = isLearned ? "已加入考试池" : "标记学会了";

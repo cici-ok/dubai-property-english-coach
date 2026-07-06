@@ -71,7 +71,7 @@
 
           <section id="learnView" class="view">
             <section class="case-card">
-              <div class="section-title"><span>01</span><h3>案例对话</h3></div>
+              <div class="section-title"><span>场景</span><h3>先看真实对话</h3></div>
               <div class="conversation-flow">
                 <div class="conversation-row incoming">
                   <span id="sourceRole">Customer</span>
@@ -82,38 +82,35 @@
                   <p id="modelLine"></p>
                 </div>
               </div>
+              <div class="conversation-actions">
+                <button id="listenReply" type="button" data-speak-text="">听完整回复</button>
+              </div>
             </section>
 
             <div class="learn-stack">
-              <section class="learn-section">
-                <div class="section-title"><span>02</span><h3>为什么这么说</h3></div>
+              <section class="learn-section explanation-card">
+                <div class="section-title"><span>拆解</span><h3>为什么这么说</h3></div>
                 <p id="breakdown"></p>
+                <div class="quick-use">
+                  <strong>今天直接用</strong>
+                  <p id="usage"></p>
+                </div>
               </section>
 
-              <div class="learn-columns">
+              <div class="learn-columns learning-kit">
                 <section class="learn-section">
-                  <div class="section-title"><span>03</span><h3>关键词</h3></div>
+                  <div class="section-title"><span>词</span><h3>关键词</h3></div>
                   <ul id="vocabList"></ul>
                 </section>
                 <section class="learn-section">
-                  <div class="section-title"><span>04</span><h3>常用句库</h3></div>
+                  <div class="section-title"><span>句</span><h3>常用句库</h3></div>
                   <ul id="sentenceList"></ul>
                 </section>
               </div>
 
-              <div class="learn-columns">
-                <section class="learn-section warning">
-                  <div class="section-title"><span>05</span><h3>容易出错</h3></div>
-                  <p id="mistake"></p>
-                </section>
-                <section class="learn-section usable">
-                  <div class="section-title"><span>06</span><h3>今天直接用</h3></div>
-                  <p id="usage"></p>
-                </section>
-              </div>
-
-              <section class="learn-section drill-card">
-                <div class="section-title"><span>07</span><h3>高频替换句</h3></div>
+              <section class="learn-section practice-card">
+                <div class="section-title"><span>练</span><h3>替换练习</h3></div>
+                <p class="mistake-note" id="mistake"></p>
                 <ul id="drillList"></ul>
               </section>
 
