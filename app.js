@@ -3,6 +3,7 @@ const STORAGE_KEYS = {
   cases: "dubaiEnglishCoach.cases",
   examLogs: "dubaiEnglishCoach.examLogs",
   progress: "dubaiEnglishCoach.progress",
+  aiQuality: "dubaiEnglishCoach.aiQuality",
 };
 
 const lessons = {
@@ -407,6 +408,9 @@ const ids = {
   coachInput: $("#coachInput"),
   generateCase: $("#generateCase"),
   summarizeTeacherCase: $("#summarizeTeacherCase"),
+  paidAiToggle: $("#paidAiToggle"),
+  aiModeTitle: $("#aiModeTitle"),
+  aiModeHint: $("#aiModeHint"),
   teacherChat: $("#teacherChat"),
   coachResult: $("#coachResult"),
   examHistory: $("#examHistory"),
@@ -451,6 +455,26 @@ function authState() {
 function authHeaders() {
   const auth = authState();
   return auth?.token ? { authorization: `Bearer ${auth.token}` } : {};
+}
+
+function getAiQuality() {
+  return localStorage.getItem(STORAGE_KEYS.aiQuality) === "paid" ? "paid" : "standard";
+}
+
+function setAiQuality(quality) {
+  localStorage.setItem(STORAGE_KEYS.aiQuality, quality === "paid" ? "paid" : "standard");
+  renderAiMode();
+}
+
+function renderAiMode() {
+  const isPaid = getAiQuality() === "paid";
+  if (ids.paidAiToggle) ids.paidAiToggle.checked = isPaid;
+  if (ids.aiModeTitle) ids.aiModeTitle.textContent = isPaid ? "付费 AI 模式" : "免费 AI 模式";
+  if (ids.aiModeHint) {
+    ids.aiModeHint.textContent = isPaid
+      ? "当前请求会直接使用 gptsapi，适合需要稳定和高质量的时候。"
+      : "默认不消耗 gptsapi。免费模型不可用时会给临时答案。";
+  }
 }
 
 function getCurrentLessonId() {
@@ -913,7 +937,7 @@ async function makeCoachCaseWithAi(raw) {
   try {
     const result = await callAiTeacher({
       task: "coach_case",
-      quality: "standard",
+      quality: getAiQuality(),
       input: raw,
     });
     if (result.content) {
@@ -980,18 +1004,19 @@ function teacherFallbackReply(raw) {
 }
 
 async function askTeacher(raw) {
+  const isPaid = getAiQuality() === "paid";
   try {
     const result = await callAiTeacher({
       task: "coach_chat",
-      quality: "standard",
+      quality: getAiQuality(),
       input: raw,
       messages: teacherMessages,
     });
     if (result.fallback) {
-      const reason = (result.errors || []).join(" / ") || "免费模型暂时不可用";
+      const reason = (result.errors || []).join(" / ") || (isPaid ? "付费模型暂时不可用" : "免费模型暂时不可用");
       return {
         content: [
-          "免费 AI 当前不可用，我先用本地规则给你一个临时答案。",
+          isPaid ? "付费 AI 当前请求失败，我先用本地规则给你一个临时答案。" : "免费 AI 当前不可用，我先用本地规则给你一个临时答案。",
           "",
           teacherFallbackReply(raw),
           "",
@@ -1007,7 +1032,7 @@ async function askTeacher(raw) {
   } catch (error) {
     console.warn(error);
     return {
-      content: ["免费 AI 当前请求失败，我先用本地规则给你一个临时答案。", "", teacherFallbackReply(raw)].join("\n"),
+      content: [isPaid ? "付费 AI 当前请求失败，我先用本地规则给你一个临时答案。" : "免费 AI 当前请求失败，我先用本地规则给你一个临时答案。", "", teacherFallbackReply(raw)].join("\n"),
       meta: "local / request-failed",
     };
   }
@@ -1026,7 +1051,7 @@ async function summarizeTeacherConversation() {
   try {
     const result = await callAiTeacher({
       task: "coach_summarize",
-      quality: "standard",
+      quality: getAiQuality(),
       messages: teacherMessages,
     });
     if (result.content && !result.fallback) {
@@ -1108,7 +1133,7 @@ async function submitExamRound() {
     try {
       const result = await callAiTeacher({
         task: "exam_next",
-        quality: "standard",
+        quality: getAiQuality(),
         learnedLessons: learned,
         messages: examMessages,
       });
@@ -1136,7 +1161,7 @@ async function submitExamRound() {
   try {
     const result = await callAiTeacher({
       task: "exam_feedback",
-      quality: "standard",
+      quality: getAiQuality(),
       module: "learned-pool",
       checklist: learned.flatMap((item) => item.checklist || []),
       rounds: examMessages.filter((item) => item.role === "assistant").map((item) => item.text),
@@ -1226,6 +1251,9 @@ ids.prevLesson.addEventListener("click", () => moveLesson(-1));
 ids.nextLesson.addEventListener("click", () => moveLesson(1));
 ids.exportData.addEventListener("click", exportLearningData);
 ids.importData.addEventListener("change", () => importLearningData(ids.importData.files[0]));
+ids.paidAiToggle.addEventListener("change", () => {
+  setAiQuality(ids.paidAiToggle.checked ? "paid" : "standard");
+});
 ids.loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   login(ids.loginEmail.value.trim(), ids.loginPassword.value);
@@ -1297,4 +1325,5 @@ ids.createUserForm.addEventListener("submit", (event) => {
 });
 
 renderTeacherChat();
+renderAiMode();
 renderAuth();

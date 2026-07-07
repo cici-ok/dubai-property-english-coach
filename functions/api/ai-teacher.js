@@ -21,8 +21,7 @@ function routes(env, task, quality) {
     model: env.GPTAPI_QUALITY_MODEL || DEFAULTS.gptsapiModel,
   };
   const paidFallbackEnabled = env.ALLOW_PAID_FALLBACK === "true";
-  const paidRequestEnabled = env.ALLOW_PAID_REQUESTS === "true";
-  if (quality === "paid" && paidRequestEnabled) return [paid];
+  if (quality === "paid") return [paid];
   return paidFallbackEnabled ? [free, paid] : [free];
 }
 

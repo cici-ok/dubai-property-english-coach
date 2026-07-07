@@ -1107,6 +1107,76 @@ li p {
   font-size: 13px;
 }
 
+.ai-mode-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: #faf9f4;
+  border: 0.5px solid var(--line);
+}
+
+.ai-mode-card strong,
+.ai-mode-card span {
+  display: block;
+}
+
+.ai-mode-card strong {
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+
+.ai-mode-card span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ai-mode-switch {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-width: 92px;
+  min-height: 34px;
+  padding: 0 12px 0 34px;
+  border-radius: 999px;
+  background: var(--white);
+  border: 0.5px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ai-mode-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ai-mode-switch::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--faint);
+}
+
+.ai-mode-switch:has(input:checked) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--white);
+}
+
+.ai-mode-switch:has(input:checked)::before {
+  background: var(--gold);
+}
+
 .teacher-chat {
   display: grid;
   gap: 10px;
